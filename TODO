@@ -1,0 +1,7 @@
+Server: models should take catalog parameter to only look there for repos
+Server: get a handle for ONE catalog
+
+Catalog: understand more POSIX modes for repository method
+Repository: context (named graphs)
+Repository: support proper tuple lists for sparql
+Repository: sparql support ASK, ...

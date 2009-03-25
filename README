@@ -1,0 +1,78 @@
+RDF-AllegroGraph-Easy
+=====================
+
+WHAT IS IT
+----------
+
+This an API which communicates with the AllegroGraph HTTP server
+
+  http://agraph.franz.com/support/documentation/3.2/new-http-server.html
+
+That server offers Sesame like functionality of an RDF tuple store.
+
+STATUS
+------
+
+This is an experimental version. Nothing has been done to make this
+scale in terms of size/speed. Also only a fraction of the AllegroGraph
+server functionality is covered yet.
+
+TESTING
+-------
+
+By default the test suite will be skipped. To test this package against a
+live server set the AG_SERVER environment variable on a shell:
+
+  export AG_SERVER=http://localhost:8080
+
+If you have started your AllegroGraph server with a username/password, you
+should add it in the URL:
+
+  export AG_SERVER=http://myuser:mypass@localhost:8080
+
+Then run again
+
+  ./Build test
+
+INSTALLATION
+
+To install this module, run the following commands:
+
+	perl Build.PL
+	./Build
+	./Build test
+	./Build install
+
+Dependencies can be resolved via CPAN, or in Debian
+
+   apt-get install libjson-perl liburi-perl
+
+SUPPORT AND DOCUMENTATION
+
+After installing, you can find documentation for this module with the
+perldoc command.
+
+    perldoc RDF::AllegroGraph::Easy
+    perldoc RDF::AllegroGraph
+
+You can also look for information at:
+
+    RT, CPAN's request tracker
+        http://rt.cpan.org/NoAuth/Bugs.html?Dist=RDF-AllegroGraph-Easy
+
+    AnnoCPAN, Annotated CPAN documentation
+        http://annocpan.org/dist/RDF-AllegroGraph-Easy
+
+    CPAN Ratings
+        http://cpanratings.perl.org/d/RDF-AllegroGraph-Easy
+
+    Search CPAN
+        http://search.cpan.org/dist/RDF-AllegroGraph-Easy
+
+
+COPYRIGHT AND LICENCE
+
+Copyright (C) 2009 Robert Barta
+
+This program is free software; you can redistribute it and/or modify it
+under the same terms as Perl itself.

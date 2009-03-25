@@ -1,0 +1,17 @@
+Build.PL
+Changes
+MANIFEST
+README
+TODO
+lib/RDF/AllegroGraph/Easy.pm
+lib/RDF/AllegroGraph.pm
+lib/RDF/AllegroGraph/Server.pm
+lib/RDF/AllegroGraph/Repository.pm
+lib/RDF/AllegroGraph/Catalog.pm
+lib/RDF/AllegroGraph/Utils.pm
+t/00-load.t
+t/pod-coverage.t
+t/pod.t
+t/01_repos.t
+Makefile.PL
+META.yml
