@@ -24,7 +24,7 @@ Robert Barta, C<< <rho at devc.at> >>
 
 =head1 COPYRIGHT & LICENSE
 
-Copyright 200[9] Robert Barta, all rights reserved.
+Copyright 20(0[9]|10) Robert Barta, all rights reserved.
 
 This program is free software; you can redistribute it and/or modify it under the same terms as Perl
 itself.
@@ -35,6 +35,6 @@ L<RDF::AllegroGraph::Server>, L<RDF::AllegroGraph::Easy>
 
 =cut
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
 1;

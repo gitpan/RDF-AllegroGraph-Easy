@@ -1,15 +1,11 @@
 Revision history for RDF-AllegroGraph-Easy
 
-0.01 - Wed Mar 25 13:39:24 2009
-
-0.01 - Wed Mar 25 13:01:45 2009
-
-0.01 - Wed Mar 25 12:58:47 2009
-	.
-
-0.01 - Wed Mar 25 12:54:19 2009
-	whatever
+0.02    Fri Apr  2 16:44:33 CEST 2010
+	- adaptions to subtle changes since 3.1.1, works now with AG 3.3
+	- added cpan upload feature to Build
 
 0.01    Tue Mar 24 16:42:16 CET 2009
         First version, released on an unsuspecting world.
+
+
 

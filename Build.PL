@@ -3,6 +3,18 @@ use strict;
 use warnings;
 use Module::Build;
 
+use Module::Build;
+my $class = Module::Build->subclass(
+    class => "Module::Build::Custom",
+    code => <<'SUBCLASS' );
+
+sub ACTION_upload {
+    my $self = shift;
+    my $v = $self->dist_version();
+    $self->do_system(('cpan-upload', "RDF-AllegroGraph-Easy-$v.tar.gz"));
+}
+SUBCLASS
+
 my $builder = Module::Build->new(
     module_name         => 'RDF::AllegroGraph::Easy',
     license             => 'perl',

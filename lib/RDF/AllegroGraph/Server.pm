@@ -4,6 +4,7 @@ use LWP::UserAgent;
 use base 'LWP::UserAgent';
 
 #use LWP::Debug qw(+ -conns);
+#use LWP::Debug qw(+);
 
 sub new {
     my $class = shift;
@@ -133,6 +134,7 @@ sub catalogs {
     my $resp = $self->{ua}->get ($self->{ADDRESS} . '/catalogs');
     die "protocol error: ".$resp->status_line unless $resp->is_success;
     my $cats = from_json ($resp->content);
+#    warn Dumper $cats;
     return 
 	map { $_ => RDF::AllegroGraph::Catalog->new (NAME => $_, SERVER => $self) }
         map { s|^/catalogs|| && $_ }   

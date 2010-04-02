@@ -212,8 +212,7 @@ if (DONE) {
     map { is (scalar @$_, 3,                     'triple everywhere')       } @ss;
 
     @ss = $model->sparql ('SELECT ?thing WHERE { ?cat <urn:x-me:hates> ?thing . }' );
-#    warn Dumper \@ss;
-    is (scalar @ss, 3, 'query: all that hate');
+    is (scalar @ss, 2, 'query: all that hate');
     map {  like ($_->[0], qr/<urn:x-me:(kitty|tomcat)>/, 'tomcat/litty everywhere') } @ss;
     map { is (scalar @$_, 1,                 'singleton everywhere')        } @ss;
 

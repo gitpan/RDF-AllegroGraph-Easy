@@ -1,11 +1,16 @@
 package RDF::AllegroGraph::Utils;
 
+use Data::Dumper;
+
 sub _hash_to_perl {
     my $h = shift;
+#    warn "hash to perl ".Dumper $h;
+    my $h2;
     foreach my $k (keys %$h) {
-	$h->{$k} = _data_to_perl ($h->{$k});
+#	warn $k;
+	$h2->{$k} = _data_to_perl ($h->{$k});
     }
-    return $h;
+    return $h2;
 }
 
 sub _data_to_perl {
@@ -18,6 +23,8 @@ sub _data_to_perl {
 	return $1;
     } elsif ($d =~ q|^"(.*)"$|) {
 	return $1;
+    } elsif (ref ($d) eq 'JSON::XS::Boolean') {
+	return JSON::XS::true == $d;
     } else {
 	return $d;
     }
