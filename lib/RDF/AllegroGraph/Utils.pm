@@ -2,6 +2,18 @@ package RDF::AllegroGraph::Utils;
 
 use Data::Dumper;
 
+require Exporter;
+@ISA = qw(Exporter);
+@EXPORT_OK = qw(coord2literal);
+
+sub coord2literal {
+    my $typeURI = shift;
+    my $A = shift;
+    my $B = shift;
+
+    return sprintf qq|"+$A+$B"^^<$typeURI>|;
+}
+
 sub _hash_to_perl {
     my $h = shift;
 #    warn "hash to perl ".Dumper $h;

@@ -9,9 +9,10 @@ lib/RDF/AllegroGraph/Server.pm
 lib/RDF/AllegroGraph/Repository.pm
 lib/RDF/AllegroGraph/Catalog.pm
 lib/RDF/AllegroGraph/Utils.pm
-t/00-load.t
 t/pod-coverage.t
 t/pod.t
 t/01_repos.t
+t/02_namespaces.t
 META.yml
 Makefile.PL
+INSTALL

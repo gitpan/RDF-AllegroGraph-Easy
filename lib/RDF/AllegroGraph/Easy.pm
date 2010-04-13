@@ -28,11 +28,17 @@ The idea of this interface is to concentrate on the essentials:
 
 =over
 
-=item how to get a handle to a remote tuple store
+=item *
 
-=item how to get RDF content into that model
+how to get a handle to a remote tuple store (see L<RDF::AllegroGraph::Server> for details)
 
-=item how to query the model
+=item *
+
+how to get RDF content into that model (see L<RDF::AllegroGraph::Repository> for details)
+
+=item *
+
+how to query the model (see L<RDF::AllegroGraph::Repository> for details)
 
 =back
 
@@ -79,7 +85,7 @@ itself.
 
 =cut
 
-our $VERSION = '0.02';
+our $VERSION = '0.03';
 
 1;
 

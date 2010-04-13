@@ -14,7 +14,7 @@ RDF::AllegroGraph::Catalog - AllegroGraph catalog handle
 
 =head1 SYNOPSIS
 
-   my $server = new RDF::AllegroGraph::Server ('http://localhost:8080');
+   my $server = new RDF::AllegroGraph::Server (ADDRESS => 'http://localhost:8080');
    my $vienna = new RDF::AllegroGraph::Catalog (NAME => '/vienna', SERVER => $server);
 
    warn "all repositories in vienna: ".Dumper $vienna->repositories;
@@ -137,6 +137,39 @@ sub repository {
 
 =pod
 
+=item B<version>
+
+This method simply returns the version supported by the protocol, in the form of C<3.3>, or similar.
+
+=cut
+
+sub version {
+    my $self = shift;
+
+    my $resp = $self->{SERVER}->{ua}->get ($self->{SERVER}->{ADDRESS} . '/catalogs' . $self->{NAME} . '/AGVersion');
+    die "protocol error: ".$resp->status_line unless $resp->is_success;
+    return $resp->content =~ m/^"?(.*?)"?$/ && $1;
+}
+
+=pod
+
+=item B<protocol>
+
+@@@@
+
+=cut
+
+sub protocol {
+    my $self = shift;
+
+    my $resp = $self->{SERVER}->{ua}->get ($self->{SERVER}->{ADDRESS} . '/catalogs' . $self->{NAME} . '/protocol');
+    die "protocol error: ".$resp->status_line unless $resp->is_success;
+    return $resp->content =~ m/^"?(.*?)"?$/ && $1;
+}
+
+
+=pod
+
 =back
 
 =head1 AUTHOR
@@ -145,7 +178,7 @@ Robert Barta, C<< <rho at devc.at> >>
 
 =head1 COPYRIGHT & LICENSE
 
-Copyright 200[9] Robert Barta, all rights reserved.
+Copyright 20(09|10) Robert Barta, all rights reserved.
 
 This program is free software; you can redistribute it and/or modify it under the same terms as Perl
 itself.
@@ -154,7 +187,7 @@ L<RDF::AllegroGraph>
 
 =cut
 
-our $VERSION  = '0.02';
+our $VERSION  = '0.03';
 
 1;
 

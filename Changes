@@ -1,5 +1,13 @@
 Revision history for RDF-AllegroGraph-Easy
 
+0.03    Tue Apr 13 20:28:12 CEST 2010
+	- added INSTALL file with useful notes
+	- added repository namespace support
+	- added catalog version info
+	- fix: doc
+	- added first geospation support (cartesian + box + circle)
+	- better error messages
+
 0.02    Fri Apr  2 16:44:33 CEST 2010
 	- adaptions to subtle changes since 3.1.1, works now with AG 3.3
 	- added cpan upload feature to Build

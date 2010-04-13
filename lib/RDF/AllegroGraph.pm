@@ -18,6 +18,18 @@ a rather orthodox style (L<RDF::AllegroGraph::Server>) or a quick-n-easy approac
 
 B<NOTE>: This is still exploratory. See the TODO.
 
+=head1 FAQ
+
+=over
+
+=item I<I receive a protocol error: 400 Bad Request from the server>
+
+4xx responses normally mean that the client is to blame, but AG seems
+to send such responses also in the case it has permission problems on
+the server. Maybe check that first.
+
+=back
+
 =head1 AUTHOR
 
 Robert Barta, C<< <rho at devc.at> >>
@@ -35,6 +47,6 @@ L<RDF::AllegroGraph::Server>, L<RDF::AllegroGraph::Easy>
 
 =cut
 
-our $VERSION = '0.02';
+our $VERSION = '0.03';
 
 1;

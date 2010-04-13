@@ -1,6 +1,6 @@
 ---
 name: RDF-AllegroGraph-Easy
-version: 0.02
+version: 0.03
 author:
   - 'Robert Barta <rho@devc.at>'
 abstract: Simplistic Interface to AllegroGraph HTTP server
@@ -22,16 +22,16 @@ provides:
     file: lib/RDF/AllegroGraph/Server.pm
   RDF::AllegroGraph:
     file: lib/RDF/AllegroGraph.pm
-    version: 0.02
+    version: 0.03
   RDF::AllegroGraph::Catalog:
     file: lib/RDF/AllegroGraph/Catalog.pm
-    version: 0.02
+    version: 0.03
   RDF::AllegroGraph::Easy:
     file: lib/RDF/AllegroGraph/Easy.pm
-    version: 0.02
+    version: 0.03
   RDF::AllegroGraph::Repository:
     file: lib/RDF/AllegroGraph/Repository.pm
-    version: 0.02
+    version: 0.03
   RDF::AllegroGraph::Server:
     file: lib/RDF/AllegroGraph/Server.pm
     version: 0.02

@@ -12,6 +12,8 @@ use Data::Dumper;
 use JSON;
 use URI::Escape qw/uri_escape_utf8/;
 
+use HTTP::Request::Common;
+
 =pod
 
 =head1 NAME
@@ -87,7 +89,7 @@ sub disband {
     my $self = shift;
     my $requ = HTTP::Request->new (DELETE => $self->{path});
     my $resp = $self->{CATALOG}->{SERVER}->{ua}->request ($requ);
-    die "protocol error: ".$resp->status_line unless $resp->is_success;
+    die "protocol error: ".$resp->status_line.' ('.$resp->content.')' unless $resp->is_success;
 }
 
 =pod
@@ -105,7 +107,7 @@ B<NOTE>: As of time of writing, AllegroGraph counts duplicate triples!
 sub size {
     my $self = shift; 
     my $resp = $self->{CATALOG}->{SERVER}->{ua}->get ($self->{path} . '/size');
-    die "protocol error: ".$resp->status_line unless $resp->is_success; 
+    die "protocol error: ".$resp->status_line.' ('.$resp->content.')' unless $resp->is_success; 
     return $resp->content;
 }
 
@@ -166,7 +168,8 @@ sub _put_post_stmts {
     my @stmts;                                                                  # collect triples there
     my $n3;                                                                     # collect N3 stuff there
     my @files;                                                                  # collect file names here
-    use Regexp::Common qw /URI/;
+    use Regexp::Common qw/URI/;
+
     foreach my $item (@_) {                                                     # walk through what we got
 	if (ref($item) eq 'ARRAY') {                                            # a triple statement
 	    push @stmts, $item;
@@ -190,13 +193,13 @@ sub _put_post_stmts {
 	    case 'POST' {
 		my $resp  = $ua->post ($self->{path} . '/statements',
 				       'Content-Type' => 'application/json', 'Content' => encode_json (\@stmts) );
-		die "protocol error: ".$resp->status_line unless $resp->is_success;
+		die "protocol error: ".$resp->status_line.' ('.$resp->content.')' unless $resp->is_success;
 	    }
 	    case 'PUT' {
 		my $requ = HTTP::Request->new (PUT => $self->{path} . '/statements',
 					       [ 'Content-Type' => 'application/json' ], encode_json (\@stmts));
 		my $resp = $ua->request ($requ);
-		die "protocol error: ".$resp->status_line unless $resp->is_success;
+		die "protocol error: ".$resp->status_line.' ('.$resp->content.')' unless $resp->is_success;
 	    }
 	    case 'DELETE' {                                                     # DELETE
 		# first bulk delete facts, i.e. where there are no wildcards
@@ -204,14 +207,14 @@ sub _put_post_stmts {
 		my $requ = HTTP::Request->new (POST => $self->{path} . '/statements/delete',
 					       [ 'Content-Type' => 'application/json' ], encode_json (\@facts));
 		my $resp = $ua->request ($requ);
-		die "protocol error: ".$resp->status_line unless $resp->is_success;
+		die "protocol error: ".$resp->status_line.' ('.$resp->content.')' unless $resp->is_success;
 
 		# the delete one by one those with wildcards
 		my @wildcarded = grep { ! defined $_->[0] || ! defined $_->[1] || ! defined $_->[2] } @stmts;
 		foreach my $w (@wildcarded) {
 		    my $requ = HTTP::Request->new (DELETE => $self->{path} . '/statements' . '?' . _to_uri ($w) );
 		    my $resp = $ua->request ($requ);
-		    die "protocol error: ".$resp->status_line unless $resp->is_success;
+		    die "protocol error: ".$resp->status_line.' ('.$resp->content.')' unless $resp->is_success;
 		}
 	    }
 	    else { die $method; }
@@ -220,7 +223,7 @@ sub _put_post_stmts {
     if ($n3) {                                                                  # if we have something to say to the server
 	my $requ = HTTP::Request->new ($method => $self->{path} . '/statements', [ 'Content-Type' => 'text/plain' ], $n3);
 	my $resp = $ua->request ($requ);
-	die "protocol error: ".$resp->status_line unless $resp->is_success;
+	die "protocol error: ".$resp->status_line.' ('.$resp->content.')' unless $resp->is_success;
     }
     for my $file (@files) {                                                     # if we have something to say to the server
 	use LWP::Simple;
@@ -236,7 +239,7 @@ sub _put_post_stmts {
 
 	my $requ = HTTP::Request->new ($method => $self->{path} . '/statements', [ 'Content-Type' => $mime ], $content);
 	my $resp = $ua->request ($requ);
-	die "protocol error: ".$resp->status_line unless $resp->is_success;
+	die "protocol error: ".$resp->status_line.' ('.$resp->content.')' unless $resp->is_success;
 
 	$method = 'POST';                                                        # whatever the first was, the others must add to it!
     }
@@ -304,7 +307,7 @@ sub match {
     my $ua = $self->{CATALOG}->{SERVER}->{ua};
     foreach my $w (@_) {
 	my $resp  = $ua->get ($self->{path} . '/statements' . '?' . _to_uri ($w));
-	die "protocol error: ".$resp->status_line unless $resp->is_success;
+	die "protocol error: ".$resp->status_line.' ('.$resp->content.')' unless $resp->is_success;
 	push @stmts, @{ from_json ($resp->content) };
     }
     return @stmts;
@@ -347,7 +350,7 @@ sub sparql {
     push @params, 'query='.uri_escape_utf8 ($query);
     
     my $resp  = $self->{CATALOG}->{SERVER}->{ua}->get ($self->{path} . '?' . join ('&', @params) );
-    die "protocol error: ".$resp->status_line unless $resp->is_success;
+    die "protocol error: ".$resp->status_line.' ('.$resp->content.')' unless $resp->is_success;
 
     my $json = from_json ($resp->content);
     switch ($options{RETURN}) {
@@ -362,13 +365,208 @@ sub sparql {
 
 =back
 
+=head2 Namespace Support
+
+=over
+
+=item B<namespaces>
+
+I<%ns> = I<$repo>->namespaces
+
+This read-only function returns a hash containing the namespaces: keys
+are the prefixes, values are the namespace URIs.
+
+B<NOTE>: No I<environment> is honored at the moment.
+
+=cut
+
+sub namespaces {
+    my $self = shift;
+    my $resp = $self->{CATALOG}->{SERVER}->{ua}->get ($self->{path} . '/namespaces');
+    die "protocol error: ".$resp->status_line.' ('.$resp->content.')' unless $resp->is_success;
+    return
+	map { $_->{prefix} => $_->{namespace} }
+	@{ from_json ($resp->content) };
+}
+
+=pod
+
+=item B<namespace>
+
+$uri = $repo->namespace ($prefix)
+
+$uri = $repo->namespace ($prefix => $uri)
+
+$repo->namespace        ($prefix => undef)
+
+This method fetches, sets and deletes prefix/uri namespaces. If only the prefix is given,
+it will look up the namespace URI. If the URI is provided as second parameter, it will set/overwrite
+that prefix. If the second parameter is C<undef>, it will delete the namespace associated with it.
+
+B<NOTE>: No I<environment> is honored at the moment.
+
+=cut
+
+sub namespace {
+    my $self = shift;
+    my $prefix = shift;
+
+    my $uri = $self->{path} . '/namespaces/' . $prefix;
+    if (scalar @_) {   # there was a second argument!
+        if (my $nsuri = shift) {
+	    my $requ = HTTP::Request->new ('PUT' => $uri, [ 'Content-Type' => 'text/plain' ], $nsuri);
+	    my $resp = $self->{CATALOG}->{SERVER}->{ua}->request ($requ);
+	    die "protocol error: ".$resp->status_line.' ('.$resp->content.')' unless $resp->is_success;
+	    return $nsuri;
+	} else {
+	    my $requ = HTTP::Request->new ('DELETE' => $uri);
+	    my $resp = $self->{CATALOG}->{SERVER}->{ua}->request ($requ);
+	    die "protocol error: ".$resp->status_line.' ('.$resp->content.')' unless $resp->is_success;
+	}
+    } else {
+	my $resp = $self->{CATALOG}->{SERVER}->{ua}->get ($uri);
+	return undef if $resp->code == 404;
+	die "protocol error: ".$resp->status_line.' ('.$resp->content.')' unless $resp->is_success;
+	return $resp->content =~ m/^"?(.*?)"?$/ && $1;
+    }
+}
+
+=pod
+
+=back
+
+=head2 GeoSpatial Support
+
+=over
+
+=item B<geotypes>
+
+I<@geotypes> = I<$repo>->geotypes
+
+This method returns a list of existing geotypes (in form of specially
+crafted URIs). You need these URIs when you want to create locations
+for them, or when you want to retrieve tuples within a specific area
+(based on the geotype).
+
+=cut
+
+sub geotypes {
+    my $self = shift;
+    my $resp = $self->{CATALOG}->{SERVER}->{ua}->get ($self->{path} . '/geo/types');
+    die "protocol error: ".$resp->status_line.' ('.$resp->content.')' unless $resp->is_success;
+    return  @{ from_json ($resp->content) };
+}
+
+=pod
+
+=item B<cartesian>
+
+=cut
+
+sub cartesian {
+    my $self = shift;
+
+    my $data = URI->new;
+    $data->query_form ( stripWidth => 10, xmin => 0, xmax => 100, ymin => 0, ymax => 100 );
+    my $content = "$data"; $content =~ s/\?//;
+    my $requ = PUT $self->{path} . '/geo/types/cartesian',
+                   'Content-Type' => 'application/x-www-form-urlencoded',
+                   'Content' => $content;
+    my $resp = $self->{CATALOG}->{SERVER}->{ua}->request ($requ);
+    die "protocol error: ".$resp->status_line.' ('.$resp->content.')' unless $resp->is_success;
+    return $resp->content =~ m/^"?(.*?)"?$/ && $1;
+}
+
+=pod
+
+=item B<inBox>
+
+I<@ss> = I<$repo>->inBox (I<$geotype>, I<$predicate>, 35, 35, 65, 65, { limit => 10 });
+
+This method tries to find all triples which lie within a certain bounding box.
+
+The geotype is the one you create with C<cartesian> or C<spheric>. The
+bounding box is given by the bottom/left and the top/right corner
+coordinates. The optional C<limit> restricts the number of triples you
+request.
+
+=cut
+
+sub inBox {
+    my $self    = shift;
+    my $geotype = shift;
+    my $pred    = shift;
+    my ($xmin, $ymin, $xmax, $ymax) = @_;
+    my $options = $_[4];
+
+    my $url = new URI ($self->{path} . '/geo/box');
+    $url->query_form (type => $geotype,
+		      predicate => $pred,
+		      xmin => $xmin,
+		      ymin => $ymin,
+		      xmax => $xmax,
+		      ymax => $ymax,
+		      ($options && defined $options->{limit}
+		        ? (limit => $options->{limit})
+			   : ())
+		      );
+    my $resp = $self->{CATALOG}->{SERVER}->{ua}->request (GET $url);
+    die "protocol error: ".$resp->status_line.' ('.$resp->content.')' unless $resp->is_success;
+    return @{ from_json ($resp->content) };
+}
+
+=pod
+
+=item B<inCircle>
+
+I<@ss> = I<$repo>->inBox (I<$geotype>, I<$predicate>, 35, 35, 10, { limit => 10 });
+
+This method tries to find all triples which lie within a certain bounding circle.
+
+The geotype is the one you create with C<cartesian> or C<spheric>. The
+bounding circle is given by the center and the radius. The optional
+C<limit> restricts the number of triples you request.
+
+
+B<NOTE>: As it seems the circle MUST be within the range you specified
+for your geotype. Otherwise AG will return 0 tuples.
+
+=cut
+
+sub inCircle {
+    my $self    = shift;
+    my $geotype = shift;
+    my $pred    = shift;
+    my ($x, $y, $radius) = @_;
+    my $options = $_[3];
+
+    my $url = new URI ($self->{path} . '/geo/circle');
+    $url->query_form (type      => $geotype,
+		      predicate => $pred,
+		      x         => $x,
+		      y         => $y,
+		      radius    => $radius,
+		      ($options && defined $options->{limit}
+		        ? (limit => $options->{limit})
+			   : ())
+		      );
+    my $resp = $self->{CATALOG}->{SERVER}->{ua}->request (GET $url);
+    die "protocol error: ".$resp->status_line.' ('.$resp->content.')' unless $resp->is_success;
+    return @{ from_json ($resp->content) };
+}
+
+
+=pod
+
+=back
+
 =head1 AUTHOR
 
 Robert Barta, C<< <rho at devc.at> >>
 
 =head1 COPYRIGHT & LICENSE
 
-Copyright 200[9] Robert Barta, all rights reserved.
+Copyright 20(09|10) Robert Barta, all rights reserved.
 
 This program is free software; you can redistribute it and/or modify it under the same terms as Perl
 itself.
@@ -377,7 +575,7 @@ L<RDF::AllegroGraph>
 
 =cut
 
-our $VERSION  = '0.02';
+our $VERSION  = '0.03';
 
 1;
 

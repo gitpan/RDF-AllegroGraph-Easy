@@ -5,7 +5,7 @@ use Data::Dumper;
 
 use_ok( 'RDF::AllegroGraph::Easy' );
 
-use constant DONE => 1;
+use constant DONE => 0;
 
 
 my $AG_SERVER = $ENV{AG_SERVER};
@@ -15,120 +15,33 @@ unless ($AG_SERVER) {
     exit;
 }
 
+use Fcntl;
 
-if (DONE) {
-#    my $storage = new RDF::AllegroGraph::Easy;
-#    isa_ok ($storage, 'RDF::AllegroGraph::Server');
-
-    my $storage;
-
-    throws_ok {
-	$storage = new RDF::AllegroGraph::Easy ('xyz');
-    } qr/ADDRESS/, 'invalid server address';
-
-    throws_ok {
-	$storage = new RDF::AllegroGraph::Easy ('http://localhost:1111', TEST => 1 );
-    } qr/connect to localhost:1111/, 'non-working server address';
-
-    lives_ok {
-	$storage = new RDF::AllegroGraph::Easy ('http://localhost:1111', TEST => 0 );
-    } 'no testing of connectivity'; 
-
-    lives_ok {
-	$storage = new RDF::AllegroGraph::Easy ($AG_SERVER, TEST => 1 );
-    } 'testing of connectivity';
-
-    
-#    lives_ok {
-#	$storage = new RDF::AllegroGraph::Easy (undef, TEST => 1 );
-#    } 'testing of connectivity (default)';
-}
-
-if (DONE) {
-    my $storage = new RDF::AllegroGraph::Easy ($AG_SERVER); #, AUTHENTICATION => 'sacklpicker:catbert');
-    my %models = $storage->models;
-    is (scalar keys %models, 0, 'no model to begin with');
-
-    throws_ok {
-	my $model = $storage->model ('/scratch/catlitter');
-    } qr/cannot/, 'at start no catlitter';
-
-    use Fcntl;
-    my $model = $storage->model ('/scratch/catlitter', mode => O_CREAT);
-    isa_ok ($model, 'RDF::AllegroGraph::Repository', 'catlitter created');
-
-    $model->disband;
-
-    throws_ok {
-	my $model = $storage->model ('/scratch/catlitter');
-    } qr/cannot/, 'at end no catlitter';
-
-
-# TODO wrong path /xxx
-# TODO create several and delete
-}
-
-if (DONE) {
-   my $server = new RDF::AllegroGraph::Server (ADDRESS => $AG_SERVER);
-   my $vienna = new RDF::AllegroGraph::Catalog (NAME => '/scratch', SERVER => $server);
-
-   like ($vienna->version,  qr/^3\./, 'store version');
-   like ($vienna->protocol, qr/\d/,   'protocol version');
-}
-
-
-if (DONE) {
+if (1||DONE) {
     my $storage = new RDF::AllegroGraph::Easy ($AG_SERVER); #, AUTHENTICATION => 'sacklpicker:catbert');
     my $model   = $storage->model ('/scratch/catlitter', mode => O_CREAT);
 
-    is ($model->size, 0, 'empty model');
-    $model->add ();
-    is ($model->size, 0, 'still empty model');
-
     $model->add (['<urn:x-me:sacklpicker>', '<urn:x-me:loves>', '<urn:x-me:rho>']);
-    is ($model->size, 1, 'added: model of 1');
 
-    $model->add (['<urn:x-me:sacklpicker>', '<urn:x-me:loves>', '<urn:x-me:rho>']);
-    is ($model->size, 2, 'added: model of 2');
-    
-    $model->replace (['<urn:x-me:sacklpicker>', '<urn:x-me:hates>', '<urn:x-me:tomcat>']);
-    is ($model->size, 1, 'replaced: model of 1');
+    my %ns = $model->namespaces ;
+    is ($ns{rdf}, 'http://www.w3.org/1999/02/22-rdf-syntax-ns#', 'rdf prefix');
+    is ($ns{rdfs}, 'http://www.w3.org/2000/01/rdf-schema#',      'rdfs prefix');
 
-    $model->add (['<urn:x-me:sacklpicker>', '<urn:x-me:hates>', '<urn:x-me:kitty>'],
-		 ['<urn:x-me:sacklpicker>', '<urn:x-me:loves>', '<urn:x-me:katty>'],
-		 ['<urn:x-me:sacklpicker>', '<urn:x-me:hates>', '<urn:x-me:ketty>'],
-	);
-    is ($model->size, 4, 'replaced/added: model of 4');
+    is ($model->namespace ('rdfs'), 'http://www.w3.org/2000/01/rdf-schema#', 'namespace fetch');
+    is ($model->namespace ('xxx'), undef,                                    'namespace nonexist');
 
-    $model->delete (['<urn:x-me:sacklpicker>', '<urn:x-me:hates>', '<urn:x-me:tomcat>']);
-    is ($model->size, 3, 'deleted (fact): model of 3');
+    $model->namespace ('xxx' => 'http://rumsti.com');
+    is ($model->namespace ('xxx'), 'http://rumsti.com', 'namespace set/fetch');
 
-    $model->delete ([undef, '<urn:x-me:hates>', undef]);
-    is ($model->size, 1, 'deleted (wildcard): model of 1');
-
-    $model->delete (['<urn:x-me:rumsti>', undef, undef]);
-    is ($model->size, 1, 'deleted (wildcard): model of 1');
-
-    $model->add (['<urn:x-me:sacklpicker>', '<urn:x-me:hates>', '<urn:x-me:tomcat>'],
-		 ['<urn:x-me:sacklpicker>', '<urn:x-me:hates>', '<urn:x-me:kitty>'],
-		 ['<urn:x-me:sacklpicker>', '<urn:x-me:loves>', '<urn:x-me:katty>'],
-		 ['<urn:x-me:sacklpicker>', '<urn:x-me:hates>', '<urn:x-me:kitty>'],
-	);
-    $model->delete ([undef, '<urn:x-me:loves>', undef ],
-		    [undef, undef, '<urn:x-me:kitty>' ]	);
-    is ($model->size, 1, 'deleted (wildcard): model of 1');
-
-    $model->replace (['<urn:x-me:sacklpicker>', '<urn:x-me:hates>', '<urn:x-me:tomcat>'],
-		     ['<urn:x-me:sacklpicker>', '<urn:x-me:hates>', '<urn:x-me:kitty>'],
-		     ['<urn:x-me:sacklpicker>', '<urn:x-me:loves>', '<urn:x-me:katty>'],
-		     ['<urn:x-me:sacklpicker>', '<urn:x-me:hates>', '<urn:x-me:kitty>'],
-	);
-    $model->delete ([undef, '<urn:x-me:loves>', undef ],
-                    ['<urn:x-me:sacklpicker>', '<urn:x-me:hates>', '<urn:x-me:tomcat>' ] );
-    is ($model->size, 2, 'deleted (wildcard): model of 2');
+    $model->namespace ('xxx' => undef);
+    is ($model->namespace ('xxx'), undef,                                    'namespace set/nonexist');
 
     $model->disband;
 }
+
+
+
+__END__
 
 if (DONE) {
     my $storage = new RDF::AllegroGraph::Easy ($AG_SERVER); #, AUTHENTICATION => 'sacklpicker:catbert');

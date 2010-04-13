@@ -15,7 +15,7 @@ sub ACTION_upload {
 }
 SUBCLASS
 
-my $builder = Module::Build->new(
+$class->new(
     module_name         => 'RDF::AllegroGraph::Easy',
     license             => 'perl',
     dist_author         => 'Robert Barta <rho@devc.at>',
@@ -31,13 +31,9 @@ my $builder = Module::Build->new(
     },
     add_to_cleanup      => [ 'RDF-AllegroGraph-Easy-*' ],
     create_makefile_pl => 'traditional',
-);
-
-$builder->create_build_script();
+)->create_build_script();
 
 
 
 __END__
-
-
 
