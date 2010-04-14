@@ -1,5 +1,9 @@
 Revision history for RDF-AllegroGraph-Easy
 
+0.04    Wed Apr 14 02:12:59 CEST 2010
+	- fix: docs
+	- add: cartesian geometry handling improved
+
 0.03    Tue Apr 13 20:28:12 CEST 2010
 	- added INSTALL file with useful notes
 	- added repository namespace support

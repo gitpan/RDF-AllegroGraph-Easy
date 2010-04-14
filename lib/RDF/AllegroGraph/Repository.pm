@@ -461,18 +461,49 @@ sub geotypes {
 
 =item B<cartesian>
 
+I<$uri> = I<$repo>->cartesian ("100x100",       I<$stripWidth>);
+
+I<$uri> = I<$repo>->cartesian ("100x100+10+10", I<$stripWidth>);
+
+I<$uri> = I<$repo>->cartesian (I<$minx>, I<$miny>, I<$maxx>, I<$maxy>, I<$stripWidth>);
+
+This method registers one new coordinate system at the server. The returned URI is later used as
+reference to that system. The extensions of the system is provided either
+
+=over
+
+=item in the form C<WxH+X+Y>
+
+All numbers being floats. The X,Y offset part can be omitted.
+
+=item or, alternatively, as minx, miny, maxx, maxy quadruple
+
+Again all numbers being floats.
+
+=back
+
+The last parameter defines the resolution of the stripes, and gives the server optimization hints.
+(See the general AG description for a deep explanation.)
+
 =cut
 
 sub cartesian {
     my $self = shift;
 
-    my $data = URI->new;
-    $data->query_form ( stripWidth => 10, xmin => 0, xmax => 100, ymin => 0, ymax => 100 );
-    my $content = "$data"; $content =~ s/\?//;
-    my $requ = PUT $self->{path} . '/geo/types/cartesian',
-                   'Content-Type' => 'application/x-www-form-urlencoded',
-                   'Content' => $content;
-    my $resp = $self->{CATALOG}->{SERVER}->{ua}->request ($requ);
+    my $url = new URI ($self->{path} . '/geo/types/cartesian');
+
+    use Regexp::Common;
+    if ($_[0] =~ /($RE{num}{real})x($RE{num}{real})(\+($RE{num}{real})\+($RE{num}{real}))?/) {
+	shift;
+	my ($W, $H, $X, $Y) = ($1, $2, $4||0, $5||0);
+	my $stripW = shift;
+	$url->query_form (stripWidth => $stripW, xmin => $X, xmax => $X+$W, ymin => $Y, ymax => $Y+$H);
+    } else {
+	my ($X1, $Y1, $X2, $Y2, $stripW) = @_;
+	$url->query_form (stripWidth => $stripW, xmin => $X1, xmax => $X2, ymin => $Y1, ymax => $Y2);
+    }
+
+    my $resp = $self->{CATALOG}->{SERVER}->{ua}->request (PUT $url);
     die "protocol error: ".$resp->status_line.' ('.$resp->content.')' unless $resp->is_success;
     return $resp->content =~ m/^"?(.*?)"?$/ && $1;
 }
@@ -519,7 +550,7 @@ sub inBox {
 
 =item B<inCircle>
 
-I<@ss> = I<$repo>->inBox (I<$geotype>, I<$predicate>, 35, 35, 10, { limit => 10 });
+I<@ss> = I<$repo>->inCircle (I<$geotype>, I<$predicate>, 35, 35, 10, { limit => 10 });
 
 This method tries to find all triples which lie within a certain bounding circle.
 
