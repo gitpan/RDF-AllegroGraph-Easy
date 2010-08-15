@@ -35,8 +35,9 @@ sub _data_to_perl {
 	return $1;
     } elsif ($d =~ q|^"(.*)"$|) {
 	return $1;
-    } elsif (ref ($d) eq 'JSON::XS::Boolean') {
-	return JSON::XS::true == $d;
+    } elsif (JSON::XS::is_bool $d) {
+	return $d;
+#	return JSON::XS::true == $d;
     } else {
 	return $d;
     }

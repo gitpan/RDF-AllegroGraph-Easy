@@ -1,14 +1,19 @@
 Revision history for RDF-AllegroGraph-Easy
 
+0.05    Sun Aug 15 14:36:01 CEST 2010
+        - fixed: JSON::XS bool handling
+	- mod: perl 5.13 has dropped Switch
+	- added: geo test cases
+
 0.04    Wed Apr 14 02:12:59 CEST 2010
-	- fix: docs
-	- add: cartesian geometry handling improved
+	- fixed: docs
+	- added: cartesian geometry handling improved
 
 0.03    Tue Apr 13 20:28:12 CEST 2010
 	- added INSTALL file with useful notes
 	- added repository namespace support
 	- added catalog version info
-	- fix: doc
+	- fixed: doc
 	- added first geospation support (cartesian + box + circle)
 	- better error messages
 

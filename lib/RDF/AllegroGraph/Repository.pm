@@ -6,8 +6,8 @@ use warnings;
 require Exporter;
 use base qw(Exporter);
 
-use Switch;
 use Data::Dumper;
+use feature "switch";
 
 use JSON;
 use URI::Escape qw/uri_escape_utf8/;
@@ -189,19 +189,19 @@ sub _put_post_stmts {
     my $ua = $self->{CATALOG}->{SERVER}->{ua};                                  # local handle
 
     if (@stmts) {                                                               # if we have something to say to the server
-	switch ($method) {
-	    case 'POST' {
+	given ($method) {
+	    when ('POST') {
 		my $resp  = $ua->post ($self->{path} . '/statements',
 				       'Content-Type' => 'application/json', 'Content' => encode_json (\@stmts) );
 		die "protocol error: ".$resp->status_line.' ('.$resp->content.')' unless $resp->is_success;
 	    }
-	    case 'PUT' {
+	    when ('PUT') {
 		my $requ = HTTP::Request->new (PUT => $self->{path} . '/statements',
 					       [ 'Content-Type' => 'application/json' ], encode_json (\@stmts));
 		my $resp = $ua->request ($requ);
 		die "protocol error: ".$resp->status_line.' ('.$resp->content.')' unless $resp->is_success;
 	    }
-	    case 'DELETE' {                                                     # DELETE
+	    when ('DELETE') {                                                     # DELETE
 		# first bulk delete facts, i.e. where there are no wildcards
 		my @facts      = grep { defined $_->[0]   &&   defined $_->[1] &&   defined $_->[2] } @stmts;
 		my $requ = HTTP::Request->new (POST => $self->{path} . '/statements/delete',
@@ -217,7 +217,7 @@ sub _put_post_stmts {
 		    die "protocol error: ".$resp->status_line.' ('.$resp->content.')' unless $resp->is_success;
 		}
 	    }
-	    else { die $method; }
+	    default { die $method; }
 	}
     }
     if ($n3) {                                                                  # if we have something to say to the server
@@ -229,12 +229,12 @@ sub _put_post_stmts {
 	use LWP::Simple;
 	my $content = get ($file) or die "Could not open URL '$file'";
 	my $mime;                                                               # lets guess the mime type
-	switch ($file) {                                                        # magic does not normally cope well with RDF/N3, so do it by extension
-	    case /\.n3$/ { $mime = 'text/plain'; }                              # well, not really, since its text/n3
-	    case /\.nt$/ { $mime = 'text/plain'; }
-	    case /\.xml$/ { $mime = 'application/rdf+xml'; }
-	    case /\.rdf$/ { $mime = 'application/rdf+xml'; }
-	    else { die; }
+	given ($file) {                                                         # magic does not normally cope well with RDF/N3, so do it by extension
+	    when (/\.n3$/)  { $mime = 'text/plain'; }                           # well, not really, since its text/n3
+	    when (/\.nt$/)  { $mime = 'text/plain'; }
+	    when (/\.xml$/) { $mime = 'application/rdf+xml'; }
+	    when (/\.rdf$/) { $mime = 'application/rdf+xml'; }
+	    default { die; }
 	}
 
 	my $requ = HTTP::Request->new ($method => $self->{path} . '/statements', [ 'Content-Type' => $mime ], $content);
@@ -353,11 +353,11 @@ sub sparql {
     die "protocol error: ".$resp->status_line.' ('.$resp->content.')' unless $resp->is_success;
 
     my $json = from_json ($resp->content);
-    switch ($options{RETURN}) {
-	case 'TUPLE_LIST' {
+    given ($options{RETURN}) {
+	when ('TUPLE_LIST') {
 	    return @{ $json->{values} };
 	}
-	else { die };
+	default { die };
     }
 }
 

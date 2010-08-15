@@ -13,6 +13,8 @@ t/pod-coverage.t
 t/pod.t
 t/01_repos.t
 t/02_namespaces.t
+t/03_geo.t
 META.yml
 Makefile.PL
 INSTALL
+debianize
