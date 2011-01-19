@@ -3,17 +3,42 @@ use Test::Exception;
 
 use Data::Dumper;
 
-use_ok( 'RDF::AllegroGraph::Easy' );
+use_ok( 'RDF::AllegroGraph::Server' );
+
 
 use constant DONE => 1;
 
 
-my $AG_SERVER = $ENV{AG_SERVER};
+my $AG3_SERVER = $ENV{AG3_SERVER};
+my $AG4_SERVER = $ENV{AG4_SERVER};
 
-unless ($AG_SERVER) {
-    ok (1, 'Tests skipped. Use "export AG_SERVER=http://my.server:port" before running the test suite. See README for details.');
+unless ($AG3_SERVER || $AG4_SERVER) {
+    ok (1, 'Tests skipped. Use "export AG3_SERVER=http://my.server:port" or "export AG4_SERVER=http://my.server:port" before running the test suite. See README for details.');
     exit;
 }
+
+if ($AG3_SERVER && (DONE)) {
+    my $s = new RDF::AllegroGraph::Server (ADDRESS => $AG3_SERVER);
+    isa_ok ($s, 'RDF::AllegroGraph::Server3');
+    isa_ok ($s, 'RDF::AllegroGraph::Server');
+    is ($s->protocol, 3, 'protocol version');
+}
+if ($AG4_SERVER && (DONE)) {
+    my $s = new RDF::AllegroGraph::Server (ADDRESS => $AG4_SERVER);
+    isa_ok ($s, 'RDF::AllegroGraph::Server4');
+    isa_ok ($s, 'RDF::AllegroGraph::Server');
+    is ($s->protocol, 4, 'protocol version');
+
+    lives_ok( sub { $s->reconfigure }, 'expecting to survive the reconfiguration' );
+    lives_ok( sub { $s->reopen_log },  'expecting to survive the log reopen' );
+
+}
+
+__END__
+
+
+# TEST AG4_SERVER
+
 
 
 if (DONE) {

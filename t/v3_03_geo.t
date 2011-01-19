@@ -8,7 +8,7 @@ use_ok( 'RDF::AllegroGraph::Easy' );
 use constant DONE => 1;
 
 
-my $AG_SERVER = $ENV{AG_SERVER};
+my $AG_SERVER = $ENV{AG3_SERVER};
 
 unless ($AG_SERVER) {
     ok (1, 'Tests skipped. Use "export AG_SERVER=http://my.server:port" before running the test suite. See README for details.');

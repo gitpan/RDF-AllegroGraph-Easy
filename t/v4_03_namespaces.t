@@ -3,23 +3,25 @@ use Test::Exception;
 
 use Data::Dumper;
 
-use_ok( 'RDF::AllegroGraph::Easy' );
+use constant DONE => 1;
 
-use constant DONE => 0;
-
-
-my $AG_SERVER = $ENV{AG_SERVER};
+my $AG_SERVER = $ENV{AG4_SERVER};
 
 unless ($AG_SERVER) {
-    ok (1, 'Tests skipped. Use "export AG_SERVER=http://my.server:port" before running the test suite. See README for details.');
+    ok (1, 'Tests skipped. Use "export AG4_SERVER=http://my.server:port" before running the test suite. See README for details.');
     exit;
 }
 
 use Fcntl;
 
-if (1||DONE) {
-    my $storage = new RDF::AllegroGraph::Easy ($AG_SERVER); #, AUTHENTICATION => 'sacklpicker:catbert');
-    my $model   = $storage->model ('/scratch/catlitter', mode => O_CREAT);
+if (DONE) {
+    use RDF::AllegroGraph::Server;
+    my $server = new RDF::AllegroGraph::Server (ADDRESS => $AG_SERVER);
+    # TODO: generate scratch here
+    use RDF::AllegroGraph::Catalog4;
+    my $scratch = new RDF::AllegroGraph::Catalog4 (NAME => '/scratch', SERVER => $server);
+    use Fcntl;
+    my $model  = $scratch->repository ('/scratch/catlitter', O_CREAT);
 
     $model->add (['<urn:x-me:sacklpicker>', '<urn:x-me:loves>', '<urn:x-me:rho>']);
 
@@ -33,6 +35,16 @@ if (1||DONE) {
     $model->namespace ('xxx' => 'http://rumsti.com');
     is ($model->namespace ('xxx'), 'http://rumsti.com', 'namespace set/fetch');
 
+    $model->add (['<urn:x-me:sacklpicker>', '<xxx:loves>', '<urn:x-me:rho>']);
+    my @ss = $model->match ([undef, '<xxx:loves>', undef]);
+    ok (eq_array (\@ss,  [
+			  [
+			   '<urn:x-me:sacklpicker>',
+			   '<xxx:loves>',
+			   '<urn:x-me:rho>'
+			   ]
+			  ]), 'namespace match worked');
+
     $model->namespace ('xxx' => undef);
     is ($model->namespace ('xxx'), undef,                                    'namespace set/nonexist');
 
@@ -43,32 +55,7 @@ if (1||DONE) {
 
 __END__
 
-if (DONE) {
-    my $storage = new RDF::AllegroGraph::Easy ($AG_SERVER); #, AUTHENTICATION => 'sacklpicker:catbert');
-    my $model   = $storage->model ('/scratch/catlitter', mode => O_CREAT);
 
-    $model->replace (['<urn:x-me:sacklpicker>', '<urn:x-me:hates>', '<urn:x-me:tomcat>'],
-		     ['<urn:x-me:sacklpicker>', '<urn:x-me:hates>', '<urn:x-me:kitty>'],
-		     ['<urn:x-me:sacklpicker>', '<urn:x-me:loves>', '<urn:x-me:katty>'],
-		     ['<urn:x-me:sacklpicker>', '<urn:x-me:hates>', '<urn:x-me:kitty>'],
-	             );
-
-    my @ss = $model->match ([undef, undef, '<urn:x-me:kitty>']);
-    is (scalar @ss, 2, 'match found kitty');
-    map { is ($_->[2], '<urn:x-me:kitty>', 'kitty!') } @ss;
-
-    @ss = $model->match (['<urn:x-me:sacklpicker>', undef, undef]);
-    is (scalar @ss, 4, 'match found sacklpicker');
-    map { is ($_->[0], '<urn:x-me:sacklpicker>', 'sacklpicker!') } @ss;
-
-    @ss = $model->match (['<urn:x-me:sacklpicker>', '<urn:x-me:hates>', '<urn:x-me:kitty>']);
-    is (scalar @ss, 2, 'match found exactly two identical');
-
-    @ss = $model->match ([undef, '<urn:x-me:hates>', undef],
-			 [undef, '<urn:x-me:loves>', undef]);
-    is (scalar @ss, 4, 'match found love and hate');
-
-    $model->disband;
 }
 
 if (DONE) {

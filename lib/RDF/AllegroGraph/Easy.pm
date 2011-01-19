@@ -14,7 +14,7 @@ RDF::AllegroGraph::Easy - Simplistic Interface to AllegroGraph HTTP server
 
 =head1 SYNOPSIS
 
-  my $storage = new RDF::AllegroGraph::Easy ('http://my:secret@localhost:8080');
+  my $storage = new RDF::AllegroGraph::Easy ('http://my:secret@localhost:10035');
   my $model   = $storage->model ('/scratch/catlitter', mode => O_CREAT);
 
   $model->add (....);                            # add stuff
@@ -42,13 +42,16 @@ how to query the model (see L<RDF::AllegroGraph::Repository> for details)
 
 =back
 
+Currently this abstraction layer supports v3 and v4 AG server, albeit with many omissions.
+
 =head1 INTERFACE
 
 =head2 Constructor
 
-The constructor expects one parameter which is interpreted as HTTP endpoint
-for your AllegroGraph server. If left C<undef>, then the default C<http://localhost:8080>
-will be used.
+[changed v0.6]
+
+The constructor expects one parameter which is interpreted as HTTP endpoint for your AllegroGraph
+server. If left C<undef>, then the default C<http://localhost:10035> will be used.
 
 B<NOTE>: No trailing slash!
 
@@ -56,7 +59,7 @@ B<NOTE>: No trailing slash!
 
 sub new {
     my $class   = shift;
-    my $address = shift || 'http://localhost:8080';
+    my $address = shift || 'http://localhost:10035';
     use RDF::AllegroGraph::Server;
     return new RDF::AllegroGraph::Server (ADDRESS => $address, @_);
 }
@@ -77,7 +80,7 @@ then you'll automatically be notified of progress on your bug as I make changes.
 
 =head1 COPYRIGHT & LICENSE
 
-Copyright 2009 Robert Barta, all rights reserved.
+Copyright 20(09|10) Robert Barta, all rights reserved.
 
 This program is free software; you can redistribute it and/or modify it under the same terms as Perl
 itself.
@@ -85,7 +88,7 @@ itself.
 
 =cut
 
-our $VERSION = '0.05';
+our $VERSION = '0.06';
 
 1;
 

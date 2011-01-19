@@ -6,13 +6,7 @@ use warnings;
 require Exporter;
 use base qw(Exporter);
 
-use Data::Dumper;
-use feature "switch";
-
-use JSON;
-use URI::Escape qw/uri_escape_utf8/;
-
-use HTTP::Request::Common;
+use feature 'switch';
 
 =pod
 
@@ -48,18 +42,6 @@ Example:
 
   my $repo = new RDF::AllegroGraph::Repository (CATALOG => $cat, id => '/whereever');
 
-=cut
-
-sub new {
-    my $class = shift;
-    my %options = @_;
-    my $self = bless \%options, $class;
-    $self->{path} = $self->{CATALOG}->{SERVER}->{ADDRESS} . '/catalogs' . $self->{CATALOG}->{NAME} . '/repositories/' . $self->{id};
-    return $self;
-}
-
-=pod
-
 =head2 Methods
 
 =over
@@ -71,8 +53,7 @@ This read-only accessor method returns the id of the repository.
 =cut
 
 sub id {
-    my $self = shift;
-    return $self->{CATALOG}->{NAME} . '/' . $self->{id};
+    die;
 }
 
 =pod
@@ -86,10 +67,7 @@ This method removes the repository from the server. The object cannot be used af
 =cut
 
 sub disband {
-    my $self = shift;
-    my $requ = HTTP::Request->new (DELETE => $self->{path});
-    my $resp = $self->{CATALOG}->{SERVER}->{ua}->request ($requ);
-    die "protocol error: ".$resp->status_line.' ('.$resp->content.')' unless $resp->is_success;
+    die;
 }
 
 =pod
@@ -105,10 +83,7 @@ B<NOTE>: As of time of writing, AllegroGraph counts duplicate triples!
 =cut
 
 sub size {
-    my $self = shift; 
-    my $resp = $self->{CATALOG}->{SERVER}->{ua}->get ($self->{path} . '/size');
-    die "protocol error: ".$resp->status_line.' ('.$resp->content.')' unless $resp->is_success; 
-    return $resp->content;
+    die;
 }
 
 =pod
@@ -132,7 +107,7 @@ ways (also mixed):
 
 If a string looks like an URL, it will be dereferenced, the contents of the resource consulted and
 that shipped to the repository on the server. If the resource cannot be read, an exception C<Could
-not open> will be raised. Any number of these URL can be provided as parameter.
+not open> will be raised. Any number of these URLs can be provided as parameter.
 
 B<NOTE>: Only N3 files are supported, and also only when the URL ends with the extension C<nt> or
 C<n3>.
@@ -158,7 +133,7 @@ B<NOTE>: Named graphs (aka I<contexts>) are not handled. Yet.
 =cut
 
 sub add {
-    _put_post_stmts ('POST', @_);
+    die;
 }
 
 sub _put_post_stmts {
@@ -260,12 +235,13 @@ sub _to_uri {
 
 =item B<replace>
 
-This method behaves exactly like C<add>, except that any content is wiped before adding anything.
+This method behaves exactly like C<add>, except that any existing content in the repository is wiped
+before adding anything.
 
 =cut
 
 sub replace {
-    _put_post_stmts ('PUT', @_);
+    die;
 }
 
 =pod
@@ -285,7 +261,7 @@ Example: This deletes anything where the Stephansdom is the subject:
 =cut
 
 sub delete {
-    _put_post_stmts ('DELETE', @_);
+    die;
 }
 
 =pod
@@ -298,19 +274,26 @@ This method returns a list of all statements which match one of the triples prov
 as parameter. Any C<undef> as URI within such a triple is interpreted as wildcard, matching
 any other URI.
 
+(Since v0.06): The object part can now be a range of values. You simply provide an array reference
+with the lower and the upper bound as values in the array, such as for example
+
+    $repo->match ([ undef, undef, [ '"1"^^my:type', '"10"^^my:type' ] ]);
+
+B<NOTE>: Subject range queries and predicate range queries are not supported as RDF would not allow
+literals at these places anyway.
+
+(Since v0.06): For AGv4 there is now a way to configure some options when fetching matching triples:
+Simply provide as first parameter an options hash:
+
+    $repo->match ({ limit => 10 }, [ undef, .....]);
+
+These options will apply to all passed in match patterns SEPARATELY, so that with several patterns
+you might well get more than your limit.
+
 =cut
 
 sub match {
-    my $self = shift;
-    my @stmts;
-
-    my $ua = $self->{CATALOG}->{SERVER}->{ua};
-    foreach my $w (@_) {
-	my $resp  = $ua->get ($self->{path} . '/statements' . '?' . _to_uri ($w));
-	die "protocol error: ".$resp->status_line.' ('.$resp->content.')' unless $resp->is_success;
-	push @stmts, @{ from_json ($resp->content) };
-    }
-    return @stmts;
+    die;    
 }
 
 =pod
@@ -340,25 +323,7 @@ currently lost.
 =cut
 
 sub sparql {
-    my $self = shift;
-    my $query = shift;
-    my %options = @_;
-    $options{RETURN} ||= 'TUPLE_LIST';        # a good default
-
-    my @params;
-    push @params, 'queryLn=sparql';
-    push @params, 'query='.uri_escape_utf8 ($query);
-    
-    my $resp  = $self->{CATALOG}->{SERVER}->{ua}->get ($self->{path} . '?' . join ('&', @params) );
-    die "protocol error: ".$resp->status_line.' ('.$resp->content.')' unless $resp->is_success;
-
-    my $json = from_json ($resp->content);
-    given ($options{RETURN}) {
-	when ('TUPLE_LIST') {
-	    return @{ $json->{values} };
-	}
-	default { die };
-    }
+    die;
 }
 
 =pod
@@ -376,17 +341,12 @@ I<%ns> = I<$repo>->namespaces
 This read-only function returns a hash containing the namespaces: keys
 are the prefixes, values are the namespace URIs.
 
-B<NOTE>: No I<environment> is honored at the moment.
+B<NOTE>: No AllegroGraph I<environment> is honored at the moment.
 
 =cut
 
 sub namespaces {
-    my $self = shift;
-    my $resp = $self->{CATALOG}->{SERVER}->{ua}->get ($self->{path} . '/namespaces');
-    die "protocol error: ".$resp->status_line.' ('.$resp->content.')' unless $resp->is_success;
-    return
-	map { $_->{prefix} => $_->{namespace} }
-	@{ from_json ($resp->content) };
+    die;
 }
 
 =pod
@@ -408,27 +368,7 @@ B<NOTE>: No I<environment> is honored at the moment.
 =cut
 
 sub namespace {
-    my $self = shift;
-    my $prefix = shift;
-
-    my $uri = $self->{path} . '/namespaces/' . $prefix;
-    if (scalar @_) {   # there was a second argument!
-        if (my $nsuri = shift) {
-	    my $requ = HTTP::Request->new ('PUT' => $uri, [ 'Content-Type' => 'text/plain' ], $nsuri);
-	    my $resp = $self->{CATALOG}->{SERVER}->{ua}->request ($requ);
-	    die "protocol error: ".$resp->status_line.' ('.$resp->content.')' unless $resp->is_success;
-	    return $nsuri;
-	} else {
-	    my $requ = HTTP::Request->new ('DELETE' => $uri);
-	    my $resp = $self->{CATALOG}->{SERVER}->{ua}->request ($requ);
-	    die "protocol error: ".$resp->status_line.' ('.$resp->content.')' unless $resp->is_success;
-	}
-    } else {
-	my $resp = $self->{CATALOG}->{SERVER}->{ua}->get ($uri);
-	return undef if $resp->code == 404;
-	die "protocol error: ".$resp->status_line.' ('.$resp->content.')' unless $resp->is_success;
-	return $resp->content =~ m/^"?(.*?)"?$/ && $1;
-    }
+    die;
 }
 
 =pod
@@ -451,10 +391,7 @@ for them, or when you want to retrieve tuples within a specific area
 =cut
 
 sub geotypes {
-    my $self = shift;
-    my $resp = $self->{CATALOG}->{SERVER}->{ua}->get ($self->{path} . '/geo/types');
-    die "protocol error: ".$resp->status_line.' ('.$resp->content.')' unless $resp->is_success;
-    return  @{ from_json ($resp->content) };
+    die;
 }
 
 =pod
@@ -488,24 +425,7 @@ The last parameter defines the resolution of the stripes, and gives the server o
 =cut
 
 sub cartesian {
-    my $self = shift;
-
-    my $url = new URI ($self->{path} . '/geo/types/cartesian');
-
-    use Regexp::Common;
-    if ($_[0] =~ /($RE{num}{real})x($RE{num}{real})(\+($RE{num}{real})\+($RE{num}{real}))?/) {
-	shift;
-	my ($W, $H, $X, $Y) = ($1, $2, $4||0, $5||0);
-	my $stripW = shift;
-	$url->query_form (stripWidth => $stripW, xmin => $X, xmax => $X+$W, ymin => $Y, ymax => $Y+$H);
-    } else {
-	my ($X1, $Y1, $X2, $Y2, $stripW) = @_;
-	$url->query_form (stripWidth => $stripW, xmin => $X1, xmax => $X2, ymin => $Y1, ymax => $Y2);
-    }
-
-    my $resp = $self->{CATALOG}->{SERVER}->{ua}->request (PUT $url);
-    die "protocol error: ".$resp->status_line.' ('.$resp->content.')' unless $resp->is_success;
-    return $resp->content =~ m/^"?(.*?)"?$/ && $1;
+    die;
 }
 
 =pod
@@ -516,34 +436,19 @@ I<@ss> = I<$repo>->inBox (I<$geotype>, I<$predicate>, 35, 35, 65, 65, { limit =>
 
 This method tries to find all triples which lie within a certain bounding box.
 
-The geotype is the one you create with C<cartesian> or C<spheric>. The
-bounding box is given by the bottom/left and the top/right corner
-coordinates. The optional C<limit> restricts the number of triples you
-request.
+The geotype is the one you create with C<cartesian> or C<spherical>. The bounding box is given by the
+bottom/left and the top/right corner coordinates. The optional C<limit> restricts the number of
+triples you request.
+
+For cartesian coordinates you provide the bottom/left corner, and then the top/right one.
+
+For spherical coordinates you provide the longitude/latitude of the bottom/left corner, then 
+the longitude/latitude of the top/right one.
 
 =cut
 
 sub inBox {
-    my $self    = shift;
-    my $geotype = shift;
-    my $pred    = shift;
-    my ($xmin, $ymin, $xmax, $ymax) = @_;
-    my $options = $_[4];
-
-    my $url = new URI ($self->{path} . '/geo/box');
-    $url->query_form (type => $geotype,
-		      predicate => $pred,
-		      xmin => $xmin,
-		      ymin => $ymin,
-		      xmax => $xmax,
-		      ymax => $ymax,
-		      ($options && defined $options->{limit}
-		        ? (limit => $options->{limit})
-			   : ())
-		      );
-    my $resp = $self->{CATALOG}->{SERVER}->{ua}->request (GET $url);
-    die "protocol error: ".$resp->status_line.' ('.$resp->content.')' unless $resp->is_success;
-    return @{ from_json ($resp->content) };
+    die;
 }
 
 =pod
@@ -554,38 +459,48 @@ I<@ss> = I<$repo>->inCircle (I<$geotype>, I<$predicate>, 35, 35, 10, { limit => 
 
 This method tries to find all triples which lie within a certain bounding circle.
 
-The geotype is the one you create with C<cartesian> or C<spheric>. The
-bounding circle is given by the center and the radius. The optional
-C<limit> restricts the number of triples you request.
+The geotype is the one you create with C<cartesian> or C<spheric>. The bounding circle is given by
+the center and the radius. The optional C<limit> restricts the number of triples you request.
 
+For cartesian coordinates you simply provide the X/Y coordinates of the circle center, and the
+radius (in the unit as provided with the geotype.
 
-B<NOTE>: As it seems the circle MUST be within the range you specified
-for your geotype. Otherwise AG will return 0 tuples.
+For spherical coordinates the center is specified with a longitude/latitude pair. The radius is also
+interpreted along the provided geotype.
+
+B<NOTE>: As it seems, the circle MUST be totally within the range you specified for your
+geotype. Otherwise AG will return 0 tuples.
 
 =cut
 
 sub inCircle {
-    my $self    = shift;
-    my $geotype = shift;
-    my $pred    = shift;
-    my ($x, $y, $radius) = @_;
-    my $options = $_[3];
-
-    my $url = new URI ($self->{path} . '/geo/circle');
-    $url->query_form (type      => $geotype,
-		      predicate => $pred,
-		      x         => $x,
-		      y         => $y,
-		      radius    => $radius,
-		      ($options && defined $options->{limit}
-		        ? (limit => $options->{limit})
-			   : ())
-		      );
-    my $resp = $self->{CATALOG}->{SERVER}->{ua}->request (GET $url);
-    die "protocol error: ".$resp->status_line.' ('.$resp->content.')' unless $resp->is_success;
-    return @{ from_json ($resp->content) };
+    die;
 }
 
+=pod
+
+=item I<inPolygon> (since v0.06, only for AG4)
+
+I<@ss> = I<$repo>->inPolygon (I<$coordtype>, I<$preduri>, I<@points>, { I<%options> })
+
+This method tries to identify all statements where the object is within a polygon defined by the
+C<points> array. Each point is simply an array reference with 2 entries (x,y, of course).
+
+The predicate URI defines which predicates should be considered. Do not leave it C<undef>. The
+coordinate type is the one you will have generated before with C<cartesian>.
+
+The optional options can only contain C<limit> to restrict the number of tuples to be returned.
+
+For spherical coordinates make sure that you (a) provide longitude/latitude pairs and then that the
+polygon is built clockwise.
+
+B<NOTE>: This is a somewhat expensive operation in terms of communication round-trips.
+
+=cut
+
+sub inPolygon {
+    die;
+}
 
 =pod
 
@@ -597,7 +512,7 @@ Robert Barta, C<< <rho at devc.at> >>
 
 =head1 COPYRIGHT & LICENSE
 
-Copyright 20(09|10) Robert Barta, all rights reserved.
+Copyright 20(09|1[01]) Robert Barta, all rights reserved.
 
 This program is free software; you can redistribute it and/or modify it under the same terms as Perl
 itself.

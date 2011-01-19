@@ -1,5 +1,5 @@
 DEBVERSION=1
-VERSION=0.05
+VERSION=0.06
 
 debian:
 	export DEB_BUILD_OPTIONS=nocheck

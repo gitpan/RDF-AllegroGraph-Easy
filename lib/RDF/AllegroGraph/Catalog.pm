@@ -10,7 +10,7 @@ use base qw(Exporter);
 
 =head1 NAME
 
-RDF::AllegroGraph::Catalog - AllegroGraph catalog handle
+RDF::AllegroGraph::Catalog - AllegroGraph catalog handle (abstract)
 
 =head1 SYNOPSIS
 
@@ -20,28 +20,51 @@ RDF::AllegroGraph::Catalog - AllegroGraph catalog handle
    warn "all repositories in vienna: ".Dumper $vienna->repositories;
 
    # open an existing
-   my $air   = $vienna->repository ('/air-quality');
+   my $air   = $vienna->repository ('/vienna/air-quality');
    # create one if it does not exist
    use Fcntl;
-   my $water = $vienna->repository ('/water', mode => O_CREAT);
+   my $water = $vienna->repository ('/vienna/water', mode => O_CREAT);
 
 =head1 DESCRIPTION
 
-Allegrograph catalogs are a container for individual repositories
+AllegroGraph catalogs are containers for individual repositories
 (L<RDF::AllegrGraph::Repository>). The latter roughly correspond to what the RDF folks call a
 I<model>. You can get a catalog handle from the AG server (L<RDF::AllegroGraph::Server>).
 
-=cut
+=head2 Naming
 
-use RDF::AllegroGraph::Repository;
-use RDF::AllegroGraph::Utils;
+AllegroGraph understands I<catalogs> and I<repositories>. While the latter are mostly what RDF model
+are called elsewhere, catalogs are containers for a set of repositories. I<Named catalogs> are
+supported by this interface, you will have to configure them either in the C<agraph.cfg>
+configuration file, or create them with the web interface (since AGv4). Since AGv4 there is also the
+I<root container>. It always exists.
 
-use JSON;
-use HTTP::Status;
-use Fcntl;
-use Data::Dumper;
+To provide a consistent naming, this interface uses a simple path language:
 
-=pod
+=over
+
+=item C</>
+
+This specifies the root container. Any repository (such as, say, C<catlitter>) is
+addressable via C</catlitter>.
+
+=item C</[named]>
+
+Named catalogs (such as, say, C<scratch>) are addressed as C</scratch> and, yes, without further
+context it is now not decidable whether C</scratch> is a repository inside the root catalog or a
+catalog on it own.
+
+Anyways, .... repositories B<inside> one named catalog are again unambigously addressable, such as
+C</scratch/catlitter>.
+
+=back
+
+=head2 AG version 3 and 4
+
+This is interface supports AGv3 (3.3 onwards) and AGv4 (4.2 onwards), even though many features will
+be missing (until I really need them). Still, the overall interface tries to be as version agnostic
+as possible. When this fails, you should consult the proper subclass for the version, such as
+L<RDF::AllegroGraph::Server4> for example.
 
 =head1 INTERFACE
 
@@ -66,17 +89,6 @@ Example:
    my $server = new RDF::AllegroGraph::Server (...);
    my $vienna = new RDF::AllegroGraph::Catalog (NAME => '/vienna', SERVER => $server);
 
-=cut
-
-sub new {
-    my $class   = shift;
-    my %options = @_;
-    die "no NAME"   unless $options{NAME};
-    die "no SERVER" unless $options{SERVER};
-    return bless \%options, $class;
-} 
-
-=pod
 
 =head2 Methods
 
@@ -86,19 +98,12 @@ sub new {
 
 I<@repos> = I<$cat>->repositories
 
-This method returns L<RDF::AllegroGraph::Repository> objects for B<all> repositories in the catalog.
+This method returns a list of L<RDF::AllegroGraph::Repository> objects of this catalog.
 
 =cut
 
 sub repositories {
-    my $self = shift;
-    my $resp = $self->{SERVER}->{ua}->get ($self->{SERVER}->{ADDRESS} . '/catalogs' . $self->{NAME} . '/repositories');
-    die "protocol error: ".$resp->status_line unless $resp->is_success;
-    my $repo = from_json ($resp->content);
-    return
-	map { RDF::AllegroGraph::Repository->new (%$_, CATALOG => $self) }
-	map { RDF::AllegroGraph::Utils::_hash_to_perl ($_) }
-        @$repo;
+    die;
 }
 
 =pod
@@ -117,22 +122,7 @@ repository will be created.
 =cut
 
 sub repository {
-    my $self = shift;
-    my $id   = shift;
-    my $mode = shift || O_RDONLY;
-
-    if (my ($repo) = grep { $_->id eq $id } $self->repositories) {
-	return $repo;
-    } elsif ($mode == O_CREAT) {
-	(my $repoid = $id) =~ s|^/.+?/|/|;                                                 # get rid of the catalog name
-	use HTTP::Request;
-	my $requ = HTTP::Request->new (PUT => $self->{SERVER}->{ADDRESS} . '/catalogs' . $self->{NAME} . '/repositories' . $repoid);
-	my $resp = $self->{SERVER}->{ua}->request ($requ);
-	die "protocol error: ".$resp->status_line unless $resp->code == RC_NO_CONTENT;
-	return $self->repository ($id);                                                    # recursive, but without forced create
-    } else {
-	die "cannot open repository '$id'";
-    }
+    die;
 }
 
 =pod
@@ -144,27 +134,19 @@ This method simply returns the version supported by the protocol, in the form of
 =cut
 
 sub version {
-    my $self = shift;
-
-    my $resp = $self->{SERVER}->{ua}->get ($self->{SERVER}->{ADDRESS} . '/catalogs' . $self->{NAME} . '/AGVersion');
-    die "protocol error: ".$resp->status_line unless $resp->is_success;
-    return $resp->content =~ m/^"?(.*?)"?$/ && $1;
+    die;
 }
 
 =pod
 
 =item B<protocol>
 
-@@@@
+This method returns the protocol version the catalog supports.
 
 =cut
 
 sub protocol {
-    my $self = shift;
-
-    my $resp = $self->{SERVER}->{ua}->get ($self->{SERVER}->{ADDRESS} . '/catalogs' . $self->{NAME} . '/protocol');
-    die "protocol error: ".$resp->status_line unless $resp->is_success;
-    return $resp->content =~ m/^"?(.*?)"?$/ && $1;
+    die;
 }
 
 
@@ -178,7 +160,7 @@ Robert Barta, C<< <rho at devc.at> >>
 
 =head1 COPYRIGHT & LICENSE
 
-Copyright 20(09|10) Robert Barta, all rights reserved.
+Copyright 20(09|1[01]) Robert Barta, all rights reserved.
 
 This program is free software; you can redistribute it and/or modify it under the same terms as Perl
 itself.
@@ -187,7 +169,7 @@ L<RDF::AllegroGraph>
 
 =cut
 
-our $VERSION  = '0.03';
+our $VERSION  = '0.06';
 
 1;
 

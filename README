@@ -4,37 +4,27 @@ RDF-AllegroGraph-Easy
 WHAT IS IT
 ----------
 
-This an API which communicates with the AllegroGraph HTTP server
+This is an API which communicates with the AllegroGraph HTTP server
 
-  http://agraph.franz.com/support/documentation/3.2/new-http-server.html
+  version 3: http://agraph.franz.com/support/documentation/3.2/new-http-server.html
+  version 4: http://www.franz.com/agraph/support/documentation/v4/http-protocol.html
 
-That server offers Sesame like functionality of an RDF tuple store.
+That server offers Sesame-like functionality of an RDF tuple store.
+
+The Perl interface has been tested against:
+
+   AG fse 3.3
+   AG 4.2
 
 STATUS
 ------
 
-This is an experimental version. Nothing has been done to make this
-scale in terms of size/speed. Also only a fraction of the AllegroGraph
-server functionality is covered yet.
-
-TESTING
--------
-
-By default the test suite will be skipped. To test this package against a
-live server set the AG_SERVER environment variable on a shell:
-
-  export AG_SERVER=http://localhost:8080
-
-If you have started your AllegroGraph server with a username/password, you
-should add it in the URL:
-
-  export AG_SERVER=http://myuser:mypass@localhost:8080
-
-Then run again
-
-  ./Build test
+This is still an exploratory version. Nothing has been done to make this scale in terms of
+size/speed. While there is much AG4 support, it is not complete. See the ROADMAP for ideas
+how this package will evolve.
 
 INSTALLATION
+------------
 
 To install this module, run the following commands:
 
@@ -43,11 +33,36 @@ To install this module, run the following commands:
 	./Build test
 	./Build install
 
-Dependencies can be resolved via CPAN, or in Debian
+Dependencies can be resolved via CPAN, or in Debian/Ubuntu via
 
-   apt-get install libjson-perl liburi-perl
+   apt-get install libjson-perl liburi-perl libtest-exception-perl libwww-perl libpod-coverage-perl libregexp-common-perl 
+
+TESTING
+-------
+
+By default the test suite will be skipped. To test this package against a
+live v3 server set the AG3_SERVER environment variable on a shell:
+
+  export AG3_SERVER=http://localhost:8080
+
+If you have started your AllegroGraph server with a username/password, you
+should add it in the URL:
+
+  export AG3_SERVER=http://myuser:mypass@localhost:8080
+
+For a version 4 server use the environment variable AG4_SERVER:
+
+  export AG4_SERVER=http://myuser:mypass@localhost:10035
+
+In BOTH cases the test suites expect a 'scratch' catalog on the server already created. Look at the
+AG server documentation how to configure catalogs.
+
+Then run again
+
+  ./Build test
 
 SUPPORT AND DOCUMENTATION
+-------------------------
 
 After installing, you can find documentation for this module with the
 perldoc command.
@@ -76,3 +91,5 @@ Copyright (C) 2009 Robert Barta
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.
+
+Test data courtesy of Franz Inc.

@@ -15,10 +15,18 @@ eval "use Pod::Coverage $min_pc";
 plan skip_all => "Pod::Coverage $min_pc required for testing POD coverage"
     if $@;
 
-my $parms = { trustme => [qr/^(new)$/] };
+my $parms = { trustme => [qr/^(new|SNA_(ego|nodal|group|actor|path).*)$/] };
 
 #all_pod_coverage_ok( { trustme => [qr/^(new)$/] } );
-for my $module (qw(Easy Server Repository Catalog)) {
+for my $module (qw(Easy
+		   Server
+		   Server4
+		   Repository
+		   Repository4
+		   Session4
+		   Transaction4
+		   Catalog
+		   Catalog4)) {
     pod_coverage_ok('RDF::AllegroGraph::'.$module, $parms);
 }
 pod_coverage_ok('RDF::AllegroGraph', $parms);

@@ -1,7 +1,20 @@
+SNA methods
+   - matrix support?
+
 Server: models should take catalog parameter to only look there for repos
-Server: get a handle for ONE catalog
 
 Catalog: understand more POSIX modes for repository method
-Repository: context (named graphs)
+
+Repository: context (named graphs) and multiple graph queries
 Repository: support proper tuple lists for sparql
-Repository: sparql support ASK, ...
+Repository: sparql support ASK, SELECT, CONSTRUCT, DESCRIBE
+
+support {} options for add/replace
+
+federate support
+
+date queries
+
+persistent queries
+
+is_writable for repos

@@ -11,7 +11,10 @@ sub coord2literal {
     my $A = shift;
     my $B = shift;
 
-    return sprintf qq|"+$A+$B"^^<$typeURI>|;
+    $typeURI = "<" . $typeURI . ">" unless $typeURI =~ /^<.+>$/;
+    return $typeURI =~ /spherical/ 
+	     ? '"' . (sprintf "%+011.7f", $B) . (sprintf "%+012.7f", $A) . '"^^' . $typeURI
+             : '"' . (sprintf "%+.7f",    $A) . (sprintf "%+.7f",    $B) . '"^^' . $typeURI
 }
 
 sub _hash_to_perl {
