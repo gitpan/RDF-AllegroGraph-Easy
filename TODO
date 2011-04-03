@@ -1,4 +1,4 @@
-SNA methods
+all SNA methods
    - matrix support?
 
 Server: models should take catalog parameter to only look there for repos
@@ -13,8 +13,11 @@ support {} options for add/replace
 
 federate support
 
-date queries
-
 persistent queries
 
 is_writable for repos
+
+constants for the usual suspects RDF_TYPE RDFS_SUBCLASSOF, ....
+
+duplicate suppression: can it be config'd at startup and
+always be active? What is an "AllegroGraph merge"???

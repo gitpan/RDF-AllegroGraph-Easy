@@ -209,7 +209,7 @@ Copyright 20(09|11) Robert Barta, all rights reserved.
 This program is free software; you can redistribute it and/or modify it under the same terms as Perl
 itself.
 
-L<RDF::AllegroGraph>
+L<RDF::AllegroGraph>, L<RDF::AllegroGraph::Server4>
 
 =cut
 

@@ -37,6 +37,6 @@ t/v4_04_easy.t
 t/kennedy.n3
 t/lesmiserables.rdf
 META.yml
-Makefile.PL
 INSTALL
 debianize
+Makefile.PL

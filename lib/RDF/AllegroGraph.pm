@@ -32,6 +32,10 @@ B<NOTE>: This is still exploratory. See the TODO.
 4xx responses normally mean that the client is to blame, but AG seems to send such responses also in
 the case it has permission problems on the server. Maybe check that first.
 
+=item I<The tests - with AG4_SERVER defined - run a bit slow...>
+
+True, but that is because the many repository creations and deletions. That is not a fast operation.
+
 =back
 
 =head1 AUTHOR
@@ -49,7 +53,7 @@ Test data courtesy of Franz Inc.
 
 =head1 SEE ALSO
 
-L<RDF::AllegroGraph::Server>, L<RDF::AllegroGraph::Easy>
+L<RDF::AllegroGraph::Server4>, L<RDF::AllegroGraph::Easy>
 
 =cut
 

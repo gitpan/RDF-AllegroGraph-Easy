@@ -28,6 +28,8 @@ $class->new(
 	'Regexp::Common'      => 0,
 	'Test::Pod::Coverage' => 0,
 	'Test::Exception'     => 0,
+	'DateTime'            => 0,
+	'Time::HiRes'         => 0,
     },
     add_to_cleanup      => [ 'RDF-AllegroGraph-Easy-*' ],
     create_makefile_pl => 'traditional',

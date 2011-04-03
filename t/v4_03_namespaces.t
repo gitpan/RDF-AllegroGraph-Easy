@@ -32,23 +32,27 @@ if (DONE) {
     is ($model->namespace ('rdfs'), 'http://www.w3.org/2000/01/rdf-schema#', 'namespace fetch');
     is ($model->namespace ('xxx'), undef,                                    'namespace nonexist');
 
-    $model->namespace ('xxx' => 'http://rumsti.com');
-    is ($model->namespace ('xxx'), 'http://rumsti.com', 'namespace set/fetch');
+    $model->namespace ('xxx' => 'http://rumsti.com#');
+    is ($model->namespace ('xxx'), 'http://rumsti.com#', 'namespace set/fetch xxx');
+    $model->namespace ('yyy' => 'http://rumsti.com#');
+    is ($model->namespace ('yyy'), 'http://rumsti.com#', 'namespace set/fetch yyy');
+    is ($model->namespace ('xxx'), 'http://rumsti.com#', 'namespace fetch xxx still here');
 
-    $model->add (['<urn:x-me:sacklpicker>', '<xxx:loves>', '<urn:x-me:rho>']);
-    my @ss = $model->match ([undef, '<xxx:loves>', undef]);
+    $model->add ('<urn:x-me:sacklpicker> <http://rumsti.com#loves> <urn:x-me:rho> .');
+
+    my @ss = $model->sparql ('SELECT ?thing WHERE { ?cat xxx:loves ?thing . }' );
+#    warn Dumper \@ss;
     ok (eq_array (\@ss,  [
 			  [
-			   '<urn:x-me:sacklpicker>',
-			   '<xxx:loves>',
 			   '<urn:x-me:rho>'
 			   ]
 			  ]), 'namespace match worked');
 
     $model->namespace ('xxx' => undef);
-    is ($model->namespace ('xxx'), undef,                                    'namespace set/nonexist');
+    is ($model->namespace ('xxx'), undef,                                    'namespace set/nonexists');
+    is ($model->namespace ('yyy'), 'http://rumsti.com#',                     'namespace set/exists');
 
-    $model->disband;
+    $model->disband if DONE;
 }
 
 

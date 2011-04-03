@@ -27,9 +27,9 @@ if (DONE) {
 	$storage = new RDF::AllegroGraph::Easy ('http://localhost:1111');
     } qr/./, 'implicit testing of connectivity'; 
 
-    lives_ok {
+    throws_ok {
 	$storage = new RDF::AllegroGraph::Easy (undef, TEST => 1 );
-    } 'testing of connectivity (default)';
+    } qr/connect/, 'testing of connectivity (default)';
 }
 
 if (DONE) {

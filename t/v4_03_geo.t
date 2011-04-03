@@ -106,6 +106,12 @@ if (DONE) {
     @ss = $model->inPolygon ($c1, '<urn:x-me:location>', [10,20], [50,20], [50,60]);
     is ((scalar @ss), 2, 'inPolygon 1');
 
+    @ss = $model->inPolygon ($c1, '<urn:x-me:location>', [50,60], [10,20], [50,20]);
+    is ((scalar @ss), 2, 'inPolygon 1, rotated');
+
+    @ss = $model->inPolygon ($c1, '<urn:x-me:location>', [10,20], [50,60], [50,20]);
+    is ((scalar @ss), 2, 'inPolygon 1, mirrored');
+
     ok (
 	eq_array ([ sort map {$_->[0]} @ss ],
 		  [ '<urn:x-me:catbert>', '<urn:x-me:sacklpicker>' ])

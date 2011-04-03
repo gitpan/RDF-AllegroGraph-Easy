@@ -3,7 +3,7 @@ use Test::Exception;
 
 use Data::Dumper;
 
-use constant DONE => 1;
+use constant DONE => 0;
 
 my $AG_SERVER = $ENV{AG4_SERVER};
 unless ($AG_SERVER) {
@@ -140,7 +140,7 @@ if (DONE) {
 }
 
 my $file;
-END { $AG_SERVER && unlink $file; }
+END { $AG_SERVER && defined $file && unlink $file; }
 
 if (DONE) {
     use POSIX qw(tmpnam);
@@ -167,22 +167,30 @@ if (DONE) {
 }
 
 
-if (DONE) { # sparql and prolog queries
+if (1||DONE) { # sparql and prolog queries
     my $server  = new RDF::AllegroGraph::Server (ADDRESS => $AG_SERVER);
     my $scratch = new RDF::AllegroGraph::Catalog4 (NAME => '/scratch', SERVER => $server);
     my $model   = $server->model ('/scratch/catlitter', mode => O_CREAT);
+
+#    $model->namespace ('rdfs' => 'http://www.w3.org/2000/01/rdf-schema#');
 
     $model->add (['<urn:x-me:sacklpicker>', '<urn:x-me:hates>', '<urn:x-me:tomcat>'],
 		 ['<urn:x-me:sacklpicker>', '<urn:x-me:hates>', '<urn:x-me:kitty>'],
 		 ['<urn:x-me:sacklpicker>', '<urn:x-me:loves>', '<urn:x-me:katty>'],
 		 ['<urn:x-me:sacklpicker>', '<urn:x-me:hates>', '<urn:x-me:kitty>'],
+
+		 ['<urn:x-me:hates>',       '<http://www.w3.org/2000/01/rdf-schema#subPropertyOf>', '<urn:x-me:knows>'],
+		 ['<urn:x-me:loves>',       '<http://www.w3.org/2000/01/rdf-schema#subPropertyOf>', '<urn:x-me:knows>'],
+
+		 ['<urn:x-me:tomcat>', '<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>',       '<urn:x-me:Cat>'],
+		 ['<urn:x-me:Cat>',    '<http://www.w3.org/2000/01/rdf-schema#subClassOf>', '<urn:x-me:Mammal>'],
 	);
 
-    my @ss = $model->sparql ('SELECT ?s ?p ?o WHERE {?s ?p ?o .}' );
+    my @ss = $model->sparql ('SELECT ?p ?o WHERE {<urn:x-me:sacklpicker> ?p ?o .}' );
 #    warn Dumper \@ss;
     is (scalar @ss, 4, 'query: all triples');
-    map { is ($_->[0], '<urn:x-me:sacklpicker>', 'sackelpicker everywhere') } @ss;
-    map { is (scalar @$_, 3,                     'triple everywhere')       } @ss;
+    map { like ($_->[0], qr/<urn:x-me:(hates|loves)>/, 'love/hate everywhere') } @ss;
+    map { is (scalar @$_, 2,                           'tuple everywhere')     } @ss;
 
     @ss = $model->sparql ('SELECT ?thing WHERE { ?cat <urn:x-me:hates> ?thing . }' );
     is (scalar @ss, 2, 'query: all that hate (SPARQL)');
@@ -198,6 +206,18 @@ if (DONE) { # sparql and prolog queries
     map {  like ($_->[0], qr/<urn:x-me:(kitty|tomcat)>/, 'tomcat/kitty everywhere') } @ss;
     map { is (scalar @$_, 1,                 'singleton everywhere')        } @ss;
 #    warn Dumper \@ss;
+
+# reasoning
+    @ss = $model->sparql ('SELECT ?thing WHERE { ?cat <urn:x-me:hates> ?thing . }', INFERENCING => undef );
+    is (scalar @ss, 2, 'query: all that hate (SPARQL, no reasoning)');
+
+    @ss = $model->sparql ('SELECT ?thing WHERE { ?cat <urn:x-me:knows> ?thing . }', INFERENCING => 'true' );
+    is (scalar @ss, 4, 'query: all that hate and love (SPARQL, rdfs++ reasoning)');
+
+# reasoning and naming
+    my $ss = $model->sparql ('SELECT ?cat ?thing WHERE { ?cat <urn:x-me:knows> ?thing . }', INFERENCING => 'true', RETURN => 'NAMED_TUPLE_LIST' );
+    ok (eq_array ($ss->{names}, [ 'cat', 'thing' ]), 'names are there');
+    is ((scalar @{$ss->{values}}), 4, 'query: all that hate and love (SPARQL, rdfs++ reasoning, NAMED)');
 
     $model->disband;
 }
@@ -226,7 +246,60 @@ if (DONE) {
 		    @ss
 		    ]), 'correct range values');
 
+
+    @ss = $model->sparql ('SELECT ?s WHERE {?s <urn:x-me:nrlegs> ?o . FILTER ( ?o > 4 ) }' );
 #    warn Dumper \@ss;
+    ok (eq_array ([
+		   [
+		    '<urn:x-me:sacklpicker>'
+		    ]
+		   ],
+		  \@ss
+		  ), 'correct integer range query');
+
+
+#    warn Dumper \@ss;
+
+    $model->add (['<urn:x-me:sacklpicker>', '<urn:x-me:age>', '"666.6"^^<http://www.w3.org/2001/XMLSchema#float>'],
+		 ['<urn:x-me:tomcat>',      '<urn:x-me:age>', '"3.141"^^<http://www.w3.org/2001/XMLSchema#float>'],
+		 ['<urn:x-me:kitty>',       '<urn:x-me:age>', '"2"^^<http://www.w3.org/2001/XMLSchema#long>'],
+		 ['<urn:x-me:fluffy>',      '<urn:x-me:age>', '"3"^^<http://www.w3.org/2001/XMLSchema#long>'],
+		 );
+
+    @ss = $model->sparql ('SELECT ?s WHERE {?s <urn:x-me:age> ?age . FILTER ( ?age > 3 && ?age < 333.3) }' );
+#    warn Dumper \@ss;
+    ok (eq_array ([
+		   [
+		    '<urn:x-me:tomcat>'
+		    ]
+		   ],
+		  \@ss
+		  ), 'correct float/int range query');
+
+    use Time::HiRes;
+    my $now = time();
+    use DateTime;
+    $model->add (
+		 ['<urn:x-me:sacklpicker>', '<urn:x-me:birth>', '"'.DateTime->from_epoch ( epoch => ($now + 100)).'"^^<xsd#dateTime>'],
+		 ['<urn:x-me:tomcat>',      '<urn:x-me:birth>', '"'.DateTime->from_epoch ( epoch => ($now - 100)).'"^^<xsd#dateTime>'],
+		 ['<urn:x-me:kitty>',       '<urn:x-me:birth>', '"'.DateTime->from_epoch ( epoch => ($now +  10)).'"^^<xsd#dateTime>'],
+		 ['<urn:x-me:fluffy>',      '<urn:x-me:birth>', '"'.DateTime->from_epoch ( epoch => ($now +  20)).'"^^<xsd#dateTime>'],
+		 );
+    @ss = $model->sparql ('SELECT ?s WHERE {?s <urn:x-me:birth> ?birth . FILTER ( ?birth > "'.DateTime->from_epoch ( epoch => $now ).'"^^<xsd#dateTime> ) }' );
+#    warn Dumper \@ss;
+    ok (eq_array ([
+		   [
+		    '<urn:x-me:sacklpicker>'
+		    ],
+		   [
+		    '<urn:x-me:kitty>'
+		    ],
+		   [
+		    '<urn:x-me:fluffy>'
+		    ]
+		   ],
+                  \@ss
+                  ), 'correct date range query');
 
     $model->disband;
 }
@@ -279,7 +352,7 @@ if (DONE) { # indices
     $model->disband;
 }
 
-if (DONE) { # bulk, commit and duplicate modes
+if (DONE) { # bulk, commit and duplicate modes, only the switches
     my $server  = new RDF::AllegroGraph::Server (ADDRESS => $AG_SERVER);
     my $scratch = new RDF::AllegroGraph::Catalog4 (NAME => '/scratch', SERVER => $server);
     my $model   = $scratch->repository ('/scratch/catlitter', O_CREAT);
@@ -305,6 +378,26 @@ if (DONE) { # bulk, commit and duplicate modes
     ok (!$model->duplicate_suppression_mode,     'still switched off');
     ok ( $model->duplicate_suppression_mode (1), 'switched on');
     ok ( $model->duplicate_suppression_mode,     'still switched on');
+
+    $model->disband;
+}
+
+if (0&&DONE) { # test duplicate suppression
+    my $server  = new RDF::AllegroGraph::Server (ADDRESS => $AG_SERVER);
+    my $scratch = new RDF::AllegroGraph::Catalog4 (NAME => '/scratch', SERVER => $server);
+    my $model   = $scratch->repository ('/scratch/catlitter', O_CREAT);
+
+    $model->duplicate_suppression_mode (1);
+
+    for (1..2) {
+	$model->add (['<urn:x-me:sacklpicker>', '<urn:x-me:hates>', '<urn:x-me:tomcat>'],
+		     ['<urn:x-me:sacklpicker>', '<urn:x-me:hates>', '<urn:x-me:kitty>'],
+		     ['<urn:x-me:sacklpicker>', '<urn:x-me:loves>', '<urn:x-me:katty>'],
+		     ['<urn:x-me:sacklpicker>', '<urn:x-me:hates>', '<urn:x-me:kitty>'],
+		     );
+    }
+
+    is ($model->size, 4, 'suppressed model');
 
     $model->disband;
 }

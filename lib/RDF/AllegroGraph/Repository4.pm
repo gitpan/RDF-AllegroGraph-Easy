@@ -421,10 +421,13 @@ sub _query {
     my %options = @_;
 
     $options{RETURN} ||= 'TUPLE_LIST';        # a good default
+    my $NAMED = 0;
+    ($NAMED, $options{RETURN}) = (1, 'TUPLE_LIST') if $options{RETURN} eq 'NAMED_TUPLE_LIST';        # store the info that we should return the names as well
 
     my @params;
     push @params, "queryLn=$lang";
     push @params, 'query='.uri_escape_utf8 ($query);
+    push @params, 'infer='.uri_escape_utf8 ($options{INFERENCING}) if defined $options{INFERENCING};
     
     my $resp  = $self->{CATALOG}->{SERVER}->{ua}->get ($self->{path} . '?' . join ('&', @params) );
     die "protocol error: ".$resp->status_line.' ('.$resp->content.')' unless $resp->is_success;
@@ -432,7 +435,7 @@ sub _query {
     my $json = from_json ($resp->content);
     given ($options{RETURN}) {
 	when ('TUPLE_LIST') {
-	    return @{ $json->{values} };
+	    return $NAMED ? ($json) : @{ $json->{values} };
 	}
 	default { die };
     }
@@ -457,8 +460,19 @@ As additional options are accepted:
 
 =item C<RETURN> (default: C<TUPLE_LIST>)
 
-The result will be a sequence of (references to) arrays. All naming of the individual columns is
-currently lost.
+In the case of C<TUPLE_LIST> the result will be a sequence of (references to) arrays. All naming of
+the individual columns is hereby lost. C<TUPLE_LIST> really only returns the data (and not the names
+within SELECT clause).
+
+(since v0.08)
+C<NAMED_TUPLE_LIST> also returns a hash with the names (list reference) and the result sequence
+(list reference, too).
+
+=item C<INFERENCING> (default: undef)
+
+[Since v0.08] With this option you can control the degree of inferencing used with this query.
+By default, no inferencing is used, but if you pass in C<rdfs++>, then the semantics of those
+properties mentioned in C<.../doc/agraph-introduction.html#reasoning> are honored.
 
 =back
 
@@ -503,6 +517,10 @@ This read-only function returns a hash containing the namespaces: keys
 are the prefixes, values are the namespace URIs.
 
 B<NOTE>: No AllegroGraph I<environment> is honored at the moment.
+
+B<NOTE>: My current understanding is that AG does NOT support namespaces when you load data with
+C<add()> or C<replace()>, or try to match it with C<match()>. In that case, all URIs must be fully
+expanded. Namespaces seem to work with SPARQL queries, though.
 
 =cut
 
@@ -960,7 +978,7 @@ sub duplicate_suppression_mode {
 
 =cut
 
-our $VERSION  = '0.06';
+our $VERSION  = '0.07';
 
 1;
 
