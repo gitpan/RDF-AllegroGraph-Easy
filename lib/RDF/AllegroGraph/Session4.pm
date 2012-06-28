@@ -6,9 +6,7 @@ use warnings;
 use base qw(RDF::AllegroGraph::Repository4);
 
 use Data::Dumper;
-use feature "switch";
 
-use JSON;
 use URI::Escape qw/uri_escape_utf8/;
 
 use HTTP::Request::Common;
@@ -120,17 +118,15 @@ sub generator {
     my @forward;
     my @reverse;
     foreach my $pred (keys %$spec) {
-	given ($spec->{$pred}) {
-	    when ('bidirectional') {
+	if ($spec->{$pred} eq 'bidirectional') {
 		push @bidirectional, $pred;
 	    }
-	    when ('forward') {
+	elsif ($spec->{$pred} eq 'forward') {
 		push @forward, $pred;
 	    }
-	    when ('reverse') {
+	elsif ($spec->{$pred} eq 'reverse') {
 		push @reverse, $pred;
 	    }
-	}
     }
 #    warn Dumper \@undirected;
 
@@ -309,7 +305,7 @@ L<RDF::AllegroGraph>
 
 =cut
 
-our $VERSION  = '0.03';
+our $VERSION  = '0.04';
 
 1;
 

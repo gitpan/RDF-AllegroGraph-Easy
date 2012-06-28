@@ -1,5 +1,9 @@
 Revision history for RDF-AllegroGraph-Easy
 
+0.09    2012-06-27T20:30:00 by Martin Thurn mthurn@cpan.org
+	- removed dependency on perl 5.10
+	- added missing prereq JSON::XS
+
 0.08    ?????????????
 	- support for RDFS++ inferencing
 	- noted that namespaces DO NOT work when using add(), replace() and match()

@@ -1,15 +1,11 @@
 ---
-name: RDF-AllegroGraph-Easy
-version: 0.08
+abstract: 'Simplistic Interface to AllegroGraph HTTP server'
 author:
   - 'Robert Barta <rho@devc.at>'
-abstract: Simplistic Interface to AllegroGraph HTTP server
-license: perl
-resources:
-  license: http://dev.perl.org/licenses/
 build_requires:
   DateTime: 0
   JSON: 0
+  JSON::XS: 0
   LWP: 0
   Regexp::Common: 0
   Test::Exception: 0
@@ -18,10 +14,18 @@ build_requires:
   Time::HiRes: 0
   URI::Escape: 0
 configure_requires:
-  Module::Build: 0.340201
+  Module::Build: 0.4
+dynamic_config: 1
+generated_by: 'Module::Build version 0.4001, CPAN::Meta::Converter version 2.112150'
+license: perl
+meta-spec:
+  url: http://module-build.sourceforge.net/META-spec-v1.4.html
+  version: 1.4
+name: RDF-AllegroGraph-Easy
 provides:
   LWP::UserAgent::AG:
     file: lib/RDF/AllegroGraph/Server.pm
+    version: 0
   RDF::AllegroGraph:
     file: lib/RDF/AllegroGraph.pm
     version: 0.04
@@ -36,19 +40,19 @@ provides:
     version: 0.04
   RDF::AllegroGraph::Easy:
     file: lib/RDF/AllegroGraph/Easy.pm
-    version: 0.08
+    version: 0.09
   RDF::AllegroGraph::Repository:
     file: lib/RDF/AllegroGraph/Repository.pm
-    version: 0.03
+    version: 0.04
   RDF::AllegroGraph::Repository3:
     file: lib/RDF/AllegroGraph/Repository3.pm
-    version: 0.04
+    version: 0.05
   RDF::AllegroGraph::Repository4:
     file: lib/RDF/AllegroGraph/Repository4.pm
-    version: 0.07
+    version: 0.08
   RDF::AllegroGraph::Server:
     file: lib/RDF/AllegroGraph/Server.pm
-    version: 0.04
+    version: 0.05
   RDF::AllegroGraph::Server3:
     file: lib/RDF/AllegroGraph/Server3.pm
     version: 0.02
@@ -57,12 +61,13 @@ provides:
     version: 0.03
   RDF::AllegroGraph::Session4:
     file: lib/RDF/AllegroGraph/Session4.pm
-    version: 0.03
+    version: 0.04
   RDF::AllegroGraph::Transaction4:
     file: lib/RDF/AllegroGraph/Transaction4.pm
+    version: 0
   RDF::AllegroGraph::Utils:
     file: lib/RDF/AllegroGraph/Utils.pm
-generated_by: Module::Build version 0.340201
-meta-spec:
-  url: http://module-build.sourceforge.net/META-spec-v1.4.html
-  version: 1.4
+    version: 0
+resources:
+  license: http://dev.perl.org/licenses/
+version: 0.09

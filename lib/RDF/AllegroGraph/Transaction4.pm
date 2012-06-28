@@ -6,7 +6,6 @@ use warnings;
 use base qw(RDF::AllegroGraph::Session4);
 
 use Data::Dumper;
-use feature "switch";
 
 use JSON;
 use URI::Escape qw/uri_escape_utf8/;

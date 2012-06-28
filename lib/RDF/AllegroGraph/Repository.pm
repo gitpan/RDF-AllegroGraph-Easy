@@ -6,7 +6,7 @@ use warnings;
 require Exporter;
 use base qw(Exporter);
 
-use feature 'switch';
+use JSON;
 
 =pod
 
@@ -164,19 +164,18 @@ sub _put_post_stmts {
     my $ua = $self->{CATALOG}->{SERVER}->{ua};                                  # local handle
 
     if (@stmts) {                                                               # if we have something to say to the server
-	given ($method) {
-	    when ('POST') {
-		my $resp  = $ua->post ($self->{path} . '/statements',
-				       'Content-Type' => 'application/json', 'Content' => encode_json (\@stmts) );
-		die "protocol error: ".$resp->status_line.' ('.$resp->content.')' unless $resp->is_success;
-	    }
-	    when ('PUT') {
+	if ($method eq 'POST') {
+	    my $resp  = $ua->post ($self->{path} . '/statements',
+				   'Content-Type' => 'application/json', 'Content' => encode_json (\@stmts) );
+	    die "protocol error: ".$resp->status_line.' ('.$resp->content.')' unless $resp->is_success;
+	}
+	elsif ($method eq 'PUT') {
 		my $requ = HTTP::Request->new (PUT => $self->{path} . '/statements',
 					       [ 'Content-Type' => 'application/json' ], encode_json (\@stmts));
 		my $resp = $ua->request ($requ);
 		die "protocol error: ".$resp->status_line.' ('.$resp->content.')' unless $resp->is_success;
 	    }
-	    when ('DELETE') {                                                     # DELETE
+	elsif ($method eq 'DELETE') {                                                     # DELETE
 		# first bulk delete facts, i.e. where there are no wildcards
 		my @facts      = grep { defined $_->[0]   &&   defined $_->[1] &&   defined $_->[2] } @stmts;
 		my $requ = HTTP::Request->new (POST => $self->{path} . '/statements/delete',
@@ -192,9 +191,9 @@ sub _put_post_stmts {
 		    die "protocol error: ".$resp->status_line.' ('.$resp->content.')' unless $resp->is_success;
 		}
 	    }
-	    default { die $method; }
+	    else { die $method; }
 	}
-    }
+
     if ($n3) {                                                                  # if we have something to say to the server
 	my $requ = HTTP::Request->new ($method => $self->{path} . '/statements', [ 'Content-Type' => 'text/plain' ], $n3);
 	my $resp = $ua->request ($requ);
@@ -204,13 +203,12 @@ sub _put_post_stmts {
 	use LWP::Simple;
 	my $content = get ($file) or die "Could not open URL '$file'";
 	my $mime;                                                               # lets guess the mime type
-	given ($file) {                                                         # magic does not normally cope well with RDF/N3, so do it by extension
-	    when (/\.n3$/)  { $mime = 'text/plain'; }                           # well, not really, since its text/n3
-	    when (/\.nt$/)  { $mime = 'text/plain'; }
-	    when (/\.xml$/) { $mime = 'application/rdf+xml'; }
-	    when (/\.rdf$/) { $mime = 'application/rdf+xml'; }
-	    default { die; }
-	}
+	                                                        # magic does not normally cope well with RDF/N3, so do it by extension
+	if ($file =~ m/\.n3$/)  { $mime = 'text/plain'; }                           # well, not really, since its text/n3
+	elsif ($file =~ m/\.nt$/)  { $mime = 'text/plain'; }
+	elsif ($file =~ m/\.xml$/) { $mime = 'application/rdf+xml'; }
+	elsif ($file =~ m/\.rdf$/) { $mime = 'application/rdf+xml'; }
+	else { die; }
 
 	my $requ = HTTP::Request->new ($method => $self->{path} . '/statements', [ 'Content-Type' => $mime ], $content);
 	my $resp = $ua->request ($requ);
@@ -521,7 +519,7 @@ L<RDF::AllegroGraph>
 
 =cut
 
-our $VERSION  = '0.03';
+our $VERSION  = '0.04';
 
 1;
 

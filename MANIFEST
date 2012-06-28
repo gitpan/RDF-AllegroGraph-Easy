@@ -40,3 +40,4 @@ META.yml
 INSTALL
 debianize
 Makefile.PL
+META.json

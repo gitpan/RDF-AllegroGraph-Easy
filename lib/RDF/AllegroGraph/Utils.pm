@@ -2,6 +2,8 @@ package RDF::AllegroGraph::Utils;
 
 use Data::Dumper;
 
+use JSON::XS;
+
 require Exporter;
 @ISA = qw(Exporter);
 @EXPORT_OK = qw(coord2literal);

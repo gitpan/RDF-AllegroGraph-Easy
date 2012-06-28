@@ -41,8 +41,6 @@ use warnings;
 require Exporter;
 use base qw(Exporter);
 
-use feature 'switch';
-
 =pod
 
 =head1 NAME
@@ -213,7 +211,7 @@ L<RDF::AllegroGraph>, L<RDF::AllegroGraph::Server4>
 
 =cut
 
-our $VERSION  = '0.04';
+our $VERSION  = '0.05';
 
 1;
 
